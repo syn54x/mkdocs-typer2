@@ -43,7 +43,8 @@ markdown_extensions:
 
 plugins:
   - search
-  - mkdocs-typer2
+  - mkdocs-typer2:
+      pretty: true
   - mkdocstrings:
       handlers:
         python:
