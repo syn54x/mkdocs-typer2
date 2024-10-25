@@ -1,5 +1,11 @@
 # mkdocs-typer2
 
+[![PyPI version](https://badge.fury.io/py/mkdocs-typer2.svg)](https://badge.fury.io/py/mkdocs-typer2)
+[![Python Versions](https://img.shields.io/pypi/pyversions/mkdocs-typer2.svg)](https://pypi.org/project/mkdocs-typer2/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Downloads](https://static.pepy.tech/badge/mkdocs-typer2)](https://pepy.tech/project/mkdocs-typer2)
+
+
 A MkDocs plugin that automatically generates beautiful documentation for your Typer CLI applications.
 
 You might be wondering why there are two plugins for Typer.  The [`mkdocs-typer`](https://github.com/bruce-szalwinski/mkdocs-typer) plugin is great, but it hasn't been updated in over a year, and there have been a number of changes to Typer since then.  One important change is that Typer now has it's own documentation generation system via the `typer <module> utils docs` command.  This plugin simply leverages that system to generate the documentation for your Typer CLIs.

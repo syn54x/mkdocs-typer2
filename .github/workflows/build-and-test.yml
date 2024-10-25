@@ -29,3 +29,8 @@ jobs:
         run: uv sync -p 3.12
       - name: Run Tests
         run: uv run pytest
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
