@@ -1,0 +1,31 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync -p 3.12
+      - uses: pre-commit/action@v3.0.0
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync -p 3.12
+      - name: Run Tests
+        run: uv run pytest
