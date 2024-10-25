@@ -1,10 +1,12 @@
 # mkdocs-typer2
 
 [![PyPI version](https://badge.fury.io/py/mkdocs-typer2.svg)](https://badge.fury.io/py/mkdocs-typer2)
-[![Python Versions](https://img.shields.io/pypi/pyversions/mkdocs-typer2.svg)](https://pypi.org/project/mkdocs-typer2/)
+![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)
+![Ruff](https://img.shields.io/badge/linted%20by-ruff-FFC107.svg)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Downloads](https://static.pepy.tech/badge/mkdocs-typer2)](https://pepy.tech/project/mkdocs-typer2)
 [![codecov](https://codecov.io/gh/syn54x/mkdocs-typer2/branch/main/graph/badge.svg)](https://codecov.io/gh/syn54x/mkdocs-typer2)
+[![Issues](https://img.shields.io/github/issues/syn54x/mkdocs-typer2)](https://github.com/syn54x/mkdocs-typer2/issues)
 
 
 
