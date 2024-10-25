@@ -2,6 +2,10 @@
 
 A MkDocs plugin that automatically generates beautiful documentation for your Typer CLI applications.
 
+You might be wondering why there are two plugins for Typer.  The [`mkdocs-typer`](https://github.com/bruce-szalwinski/mkdocs-typer) plugin is great, but it hasn't been updated in over a year, and there have been a number of changes to Typer since then.  One important change is that Typer now has it's own documentation generation system via the `typer <module> utils docs` command.  This plugin simply leverages that system to generate the documentation for your Typer CLIs.
+
+I created this plugin because the original plugin was no longer working for me, and I wanted to have a simple plugin that would work with the latest version of Typer.  If the original `mkdocs-typer` plugin still works for you, there probably isn't a reason to switch.  However, if you are looking for a plugin that will work with the latest version of Typer, this plugin is for you!
+
 ## Features
 
 - Seamlessly integrates with MkDocs and Material theme
