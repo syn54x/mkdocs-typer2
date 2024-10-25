@@ -12,7 +12,6 @@ class MkdocsTyper(BasePlugin):
     # )
 
     def on_config(self, config, **kwargs) -> dict:
-        # config["markdown_extensions"].append(makeExtension(cmd=self.config["cmd"]))
         config["markdown_extensions"].append(makeExtension())
         return config
 
