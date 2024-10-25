@@ -6,6 +6,9 @@ You might be wondering why there are two plugins for Typer.  The [`mkdocs-typer`
 
 I created this plugin because the original plugin was no longer working for me, and I wanted to have a simple plugin that would work with the latest version of Typer.  If the original `mkdocs-typer` plugin still works for you, there probably isn't a reason to switch.  However, if you are looking for a plugin that will work with the latest version of Typer, this plugin is for you!
 
+[Read The Docs](https://syn54x.github.io/mkdocs-typer2/)
+[Check out a demo](https://syn54x.github.io/mkdocs-typer2/cli)
+
 ## Features
 
 - Seamlessly integrates with MkDocs and Material theme
