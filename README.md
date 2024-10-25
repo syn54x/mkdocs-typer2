@@ -4,6 +4,8 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/mkdocs-typer2.svg)](https://pypi.org/project/mkdocs-typer2/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Downloads](https://static.pepy.tech/badge/mkdocs-typer2)](https://pepy.tech/project/mkdocs-typer2)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/mkdocs-typer2/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/mkdocs-typer2)
+
 
 
 A MkDocs plugin that automatically generates beautiful documentation for your Typer CLI applications.
