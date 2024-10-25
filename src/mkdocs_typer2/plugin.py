@@ -1,7 +1,7 @@
 from mkdocs.plugins import BasePlugin
-from mkdocs.config import config_options
 
 from .markdown import makeExtension
+
 
 class MkdocsTyper(BasePlugin):
     # config_scheme = (

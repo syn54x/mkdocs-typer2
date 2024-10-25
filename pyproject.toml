@@ -25,4 +25,5 @@ dev-dependencies = [
     "mkdocs-material>=9.5.42",
     "mkdocstrings[python]>=0.26.2",
     "mkdocs-typer>=0.0.3",
+    "pre-commit>=4.0.1",
 ]

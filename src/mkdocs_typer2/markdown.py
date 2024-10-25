@@ -5,6 +5,7 @@ import xml.etree.ElementTree as etree
 
 from markdown.blockprocessors import BlockProcessor
 
+
 class TyperExtension(markdown.Extension):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -14,17 +15,16 @@ class TyperExtension(markdown.Extension):
 
 
 class TyperProcessor(BlockProcessor):
-
     def test(self, parent, block):
         return block.strip().startswith(":::") and "mkdocs-typer2" in block
-    
+
     def run(self, parent, blocks):
         block = blocks.pop(0)
-        print("Processing block:", block) 
+        print("Processing block:", block)
 
         # Extract options from the block
-        module_match = re.search(r':module:\s*(\S+)', block)
-        name_match = re.search(r':name:\s*(\S+)', block)
+        module_match = re.search(r":module:\s*(\S+)", block)
+        name_match = re.search(r":name:\s*(\S+)", block)
 
         if not module_match:
             raise ValueError("Module is required")
@@ -39,11 +39,12 @@ class TyperProcessor(BlockProcessor):
 
         if result.returncode == 0:
             html_output = markdown.markdown(result.stdout)
-            div = etree.SubElement(parent, 'div')
-            div.set('class', 'typer-docs')
-            div.extend(etree.fromstring(f'<div>{html_output}</div>'))
-        
+            div = etree.SubElement(parent, "div")
+            div.set("class", "typer-docs")
+            div.extend(etree.fromstring(f"<div>{html_output}</div>"))
+
         return True
-        
+
+
 def makeExtension(**kwargs):
     return TyperExtension(**kwargs)
