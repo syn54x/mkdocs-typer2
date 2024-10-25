@@ -5,7 +5,7 @@ theme:
   name: material
   palette:
     scheme: slate
-    primary: orange
+    primary: cyan
     accent: indigo
   features:
     - announce.dismiss
