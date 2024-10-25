@@ -43,6 +43,14 @@ plugins:
   - mkdocs-typer2
 ```
 
+The plugin offers a `pretty` option that can be set in your `mkdocs.yml` file to enable pretty documentation.  This will use markdown tables to format the CLI options and arguments instead of lists.
+
+```yaml
+plugins:
+  - mkdocs-typer2:
+      pretty: true
+```
+
 2. In your Markdown files, use the `:::typer` directive to generate documentation for your Typer CLI
 
 ```markdown
