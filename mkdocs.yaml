@@ -26,7 +26,7 @@ theme:
 
 nav:
   - Home: index.md
-  - ExampleCLI: cli.md
+  - Example CLI: cli.md
   - Changelog: changelog.md
 
 markdown_extensions:
