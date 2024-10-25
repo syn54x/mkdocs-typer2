@@ -3,7 +3,6 @@ import markdown
 import subprocess
 import xml.etree.ElementTree as etree
 
-from markdown.inlinepatterns import InlineProcessor
 from markdown.blockprocessors import BlockProcessor
 
 class TyperExtension(markdown.Extension):
