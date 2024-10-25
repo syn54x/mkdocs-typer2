@@ -3,9 +3,10 @@ repo_url: https://github.com/syn54x/mkdocs-typer2
 repo_name: mkdocs-typer2
 theme:
   name: material
+  logo: assets/syn54x-logo-variant-transparent.svg
   palette:
     scheme: slate
-    primary: cyan
+    primary: black
     accent: indigo
   features:
     - announce.dismiss
