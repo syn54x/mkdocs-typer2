@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mkdocs>=1.6.1",
+    "pydantic>=2.9.2",
     "typer>=0.12.5",
 ]
 
