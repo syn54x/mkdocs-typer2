@@ -34,12 +34,13 @@ class TyperProcessor(BlockProcessor):
         # Extract options from the block
         module_match = re.search(r":module:\s*(\S+)", block)
         name_match = re.search(r":name:\s*(\S+)", block)
-
+        pretty_match = re.search(r":pretty:\s*(\S+)", block)
         if not module_match:
             raise ValueError("Module is required")
 
         module = module_match.group(1)
         name = name_match.group(1) if name_match else ""
+        pretty = bool(pretty_match.group(1)) if pretty_match else False
 
         # Run typer command
         cmd = f"typer {module} utils docs --name {name}"
@@ -47,7 +48,7 @@ class TyperProcessor(BlockProcessor):
         result = subprocess.run(cmd.split(), capture_output=True, text=True)
 
         if result.returncode == 0:
-            if self.pretty:
+            if self.pretty or pretty:
                 md_content = self.pretty_output(result.stdout)
             else:
                 md_content = result.stdout
