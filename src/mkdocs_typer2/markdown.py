@@ -34,12 +34,23 @@ class TyperProcessor(BlockProcessor):
         # Extract options from the block
         module_match = re.search(r":module:\s*(\S+)", block)
         name_match = re.search(r":name:\s*(\S+)", block)
-
+        pretty_match = re.search(r":pretty:\s*(\S+)", block)
         if not module_match:
             raise ValueError("Module is required")
 
         module = module_match.group(1)
         name = name_match.group(1) if name_match else ""
+
+        # Determine if pretty formatting should be used
+        # Block-level setting overrides global setting if present
+        use_pretty = self.pretty  # Start with global setting
+        if pretty_match:
+            # Parse the block-level setting as a boolean
+            block_pretty_value = pretty_match.group(1).lower()
+            if block_pretty_value in ["true", "1", "yes"]:
+                use_pretty = True
+            elif block_pretty_value in ["false", "0", "no"]:
+                use_pretty = False
 
         # Run typer command
         cmd = f"typer {module} utils docs --name {name}"
@@ -47,7 +58,7 @@ class TyperProcessor(BlockProcessor):
         result = subprocess.run(cmd.split(), capture_output=True, text=True)
 
         if result.returncode == 0:
-            if self.pretty:
+            if use_pretty:
                 md_content = self.pretty_output(result.stdout)
             else:
                 md_content = result.stdout

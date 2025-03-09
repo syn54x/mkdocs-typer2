@@ -68,3 +68,39 @@ def test_typer_processor_run_missing_module():
 
     with pytest.raises(ValueError, match="Module is required"):
         processor.run(parent, blocks)
+
+
+@pytest.mark.parametrize(
+    "global_pretty,block_pretty,should_use_pretty",
+    [
+        (True, None, True),  # Global pretty enabled, no block level setting
+        (False, None, False),  # Global pretty disabled, no block level setting
+        (False, True, True),  # Global pretty disabled, block level enabled
+        (True, False, False),  # Global pretty enabled, block level disabled
+    ],
+)
+def test_typer_processor_pretty_option(global_pretty, block_pretty, should_use_pretty):
+    md = markdown.Markdown()
+    processor = TyperProcessor(md.parser, pretty=global_pretty)
+    parent = etree.Element("div")
+
+    # Build block with or without pretty option
+    block = ":::mkdocs-typer2\n    :module: test_module"
+    if block_pretty is not None:
+        block += f"\n    :pretty: {str(block_pretty).lower()}"
+
+    blocks = [block]
+
+    with patch("subprocess.run") as mock_run, patch.object(
+        processor, "pretty_output"
+    ) as mock_pretty_output:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = "# Test Output"
+        mock_pretty_output.return_value = "# Pretty Test Output"
+
+        processor.run(parent, blocks)
+
+        if should_use_pretty:
+            mock_pretty_output.assert_called_once()
+        else:
+            mock_pretty_output.assert_not_called()

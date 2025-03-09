@@ -26,11 +26,14 @@ theme:
     - toc.follow
 watch:
   - src/
+  - README.md
+  - CHANGELOG.md
 
 nav:
   - Home: index.md
-  - Example CLI: cli.md
-  - Changelog: changelog.md
+  - CLI (Old): cli.md
+  - CLI (Pretty): cli-pretty.md
+  - CHANGELOG: changelog.md
 
 markdown_extensions:
   - abbr
@@ -46,8 +49,7 @@ markdown_extensions:
 
 plugins:
   - search
-  - mkdocs-typer2:
-      pretty: true
+  - mkdocs-typer2
   - mkdocstrings:
       handlers:
         python:
