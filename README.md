@@ -1,12 +1,16 @@
 # mkdocs-typer2
 
-[![PyPI version](https://badge.fury.io/py/mkdocs-typer2.svg)](https://badge.fury.io/py/mkdocs-typer2)
-![Python 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12|%203.13-blue.svg)
-![Ruff](https://img.shields.io/badge/linted%20by-ruff-FFC107.svg)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Downloads](https://static.pepy.tech/badge/mkdocs-typer2)](https://pepy.tech/project/mkdocs-typer2)
-[![codecov](https://codecov.io/gh/syn54x/mkdocs-typer2/branch/main/graph/badge.svg)](https://codecov.io/gh/syn54x/mkdocs-typer2)
-[![Issues](https://img.shields.io/github/issues/syn54x/mkdocs-typer2)](https://github.com/syn54x/mkdocs-typer2/issues)
+[![PyTest](https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Ruff](https://img.shields.io/badge/Ruff-FFC107?style=for-the-badge&logo=python&logoColor=black)](https://docs.astral.sh/ruff/)
+[![MkDocs](https://img.shields.io/badge/MkDocs-000000?style=for-the-badge&logo=markdown&logoColor=white)](https://www.mkdocs.org/)
+[![Typer](https://img.shields.io/badge/Typer-FF4B4B?style=for-the-badge&logo=python&logoColor=white)](https://typer.tiangolo.com/)
+[![UV](https://img.shields.io/badge/UV-2C2C2C?style=for-the-badge&logo=python&logoColor=white)](https://github.com/astral-sh/uv)
+[![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.12|%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyPI](https://img.shields.io/pypi/v/mkdocs-typer2?style=for-the-badge)](https://pypi.org/project/mkdocs-typer2/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](https://opensource.org/licenses/Apache-2.0)
+[![Downloads](https://img.shields.io/badge/Downloads-2.5k-blue?style=for-the-badge)](https://pepy.tech/project/mkdocs-typer2)
+[![Codecov](https://img.shields.io/codecov/c/github/syn54x/mkdocs-typer2?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io/gh/syn54x/mkdocs-typer2)
+[![Issues](https://img.shields.io/github/issues/syn54x/mkdocs-typer2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/syn54x/mkdocs-typer2/issues)
 
 A MkDocs plugin that automatically generates beautiful documentation for your Typer CLI applications.
 
