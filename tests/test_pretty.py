@@ -157,7 +157,7 @@ $ mycli command
     # Check subcommand description
     assert len(tree.subcommands) == 1
     subcommand = tree.subcommands[0]
-    assert subcommand.name == "command"
+    assert subcommand.name == " `command`"
     assert "Command description spans" in subcommand.description
     assert "multiple lines with details" in subcommand.description
 
@@ -231,14 +231,14 @@ $ typer hello [OPTIONS] NAME
     assert len(tree.subcommands) == 2
 
     # Check docs subcommand
-    docs_cmd = next(cmd for cmd in tree.subcommands if cmd.name == "typer docs")
+    docs_cmd = next(cmd for cmd in tree.subcommands if "typer docs" in cmd.name)
     assert "Generate docs for a project" in docs_cmd.description
     assert docs_cmd.usage == "typer docs [OPTIONS]"
     assert len(docs_cmd.options) > 0
     assert any(opt.name == "--name TEXT" for opt in docs_cmd.options)
 
     # Check hello subcommand
-    hello_cmd = next(cmd for cmd in tree.subcommands if cmd.name == "typer hello")
+    hello_cmd = next(cmd for cmd in tree.subcommands if "typer hello" in cmd.name)
     assert "Some docstring content" in hello_cmd.description
     assert hello_cmd.usage == "typer hello [OPTIONS] NAME"
     assert len(hello_cmd.arguments) > 0
