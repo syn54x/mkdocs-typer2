@@ -40,7 +40,17 @@ class TyperProcessor(BlockProcessor):
 
         module = module_match.group(1)
         name = name_match.group(1) if name_match else ""
-        pretty = bool(pretty_match.group(1)) if pretty_match else False
+
+        # Determine if pretty formatting should be used
+        # Block-level setting overrides global setting if present
+        use_pretty = self.pretty  # Start with global setting
+        if pretty_match:
+            # Parse the block-level setting as a boolean
+            block_pretty_value = pretty_match.group(1).lower()
+            if block_pretty_value in ["true", "1", "yes"]:
+                use_pretty = True
+            elif block_pretty_value in ["false", "0", "no"]:
+                use_pretty = False
 
         # Run typer command
         cmd = f"typer {module} utils docs --name {name}"
@@ -48,7 +58,7 @@ class TyperProcessor(BlockProcessor):
         result = subprocess.run(cmd.split(), capture_output=True, text=True)
 
         if result.returncode == 0:
-            if self.pretty or pretty:
+            if use_pretty:
                 md_content = self.pretty_output(result.stdout)
             else:
                 md_content = result.stdout
