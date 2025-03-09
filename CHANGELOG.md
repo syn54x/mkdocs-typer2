@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [unreleased]
+
+## [0.1.4] - 2025-03-15
+
+### Added
+- Added support for Python 3.13
+- Added per-block configuration for `pretty` option in documentation directives
+- Added justfile for common development tasks
+- Added docs/cli-pretty.md example for pretty-formatted CLI documentation
+- Added docs/changelog.md that includes the project's CHANGELOG
+
+### Changed
+- Enhanced documentation with more detailed usage instructions and examples
+- Updated navigation structure in mkdocs.yaml
+- Improved TyperProcessor to support overriding global `pretty` setting at the block level
+
+## [0.1.3] - 2025-03-09
 
 ### Fixed
 - Fixed issue where docstrings weren't displayed in the generated documentation when `pretty` option was enabled
