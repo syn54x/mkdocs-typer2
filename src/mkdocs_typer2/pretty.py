@@ -1,6 +1,7 @@
 import re
-from pydantic import BaseModel
 from typing import List, Optional
+
+from pydantic import BaseModel
 
 
 class Option(BaseModel):
@@ -28,32 +29,100 @@ class CommandNode(BaseModel):
 
 def parse_markdown_to_tree(content: str) -> CommandNode:
     lines = content.split("\n")
+    root = None
+
+    # Find the root command name (# heading)
     for i, line in enumerate(lines):
         if line.startswith("# "):
-            root = CommandNode(name=lines[i].replace("# ", ""))
+            root = CommandNode(name=line.replace("# ", "").replace("`", ""))
+
+            # Capture description for root command
+            desc_lines = []
+            j = i + 1
+
+            # Skip empty lines
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+
+            # Collect description lines until we hit a section marker or subcommand
+            while (
+                j < len(lines)
+                and not lines[j].startswith("#")
+                and not lines[j].startswith("**")
+                and not lines[j].startswith("```")
+            ):
+                if lines[j].strip():  # Only add non-empty lines
+                    desc_lines.append(lines[j].strip())
+                j += 1
+
+            if desc_lines:
+                root.description = "\n".join(desc_lines)
+
             break
+
+    if not root:
+        # If no root command was found, create a default one
+        root = CommandNode(name="Unknown Command")
 
     current_command = root
     current_section = None
+    in_description = False
+    desc_lines = []
 
-    for line in lines[1:]:
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
         if line.startswith("## `"):
             # New subcommand
-            cmd_name = line.replace("## `", "").replace("`", "")
+            cmd_name = line.replace("##", "")
             new_cmd = CommandNode(name=cmd_name)
             root.subcommands.append(new_cmd)
             current_command = new_cmd
+            in_description = True  # Start capturing description for this command
+            desc_lines = []
+
+        elif (
+            in_description
+            and not line.startswith("**")
+            and not line.startswith("```")
+            and i > 0
+        ):
+            # We're in description mode and not at a section marker yet
+            if line.strip():  # Only add non-empty lines
+                desc_lines.append(line.strip())
 
         elif line.startswith("```console"):
-            # Usage section
-            usage_line = next(lines[i] for i, line in enumerate(lines) if "$ " in line)
-            current_command.usage = usage_line.replace("$ ", "")
+            # Usage section - end of description
+            if in_description and desc_lines:
+                current_command.description = "\n".join(desc_lines)
+            in_description = False
+            # Find the line with usage example
+            j = i
+            while j < len(lines) and "$ " not in lines[j]:
+                j += 1
+            if j < len(lines):
+                current_command.usage = lines[j].replace("$ ", "")
 
         elif line.startswith("**Arguments**:"):
+            # End of description section
+            if in_description and desc_lines:
+                current_command.description = "\n".join(desc_lines)
+            in_description = False
             current_section = "arguments"
 
         elif line.startswith("**Options**:"):
+            # End of description section
+            if in_description and desc_lines:
+                current_command.description = "\n".join(desc_lines)
+            in_description = False
             current_section = "options"
+
+        elif line.startswith("**Commands**:"):
+            # End of description section
+            if in_description and desc_lines:
+                current_command.description = "\n".join(desc_lines)
+            in_description = False
 
         elif line.startswith("* `") and current_section == "options":
             # Parse option
@@ -77,6 +146,8 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
                     name=name, description=desc.strip(), required=modifier == "required"
                 )
                 current_command.arguments.append(argument)
+
+        i += 1
 
     return root
 

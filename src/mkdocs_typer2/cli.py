@@ -1,12 +1,13 @@
-import typer
-
 from typing import Annotated
 
-app = typer.Typer()
+import typer
+
+app = typer.Typer(help="A sample CLI")
 
 
 @app.command()
 def docs(name: str = typer.Option(..., help="The name of the project")):
+    """Generate docs for a project"""
     print(f"Generating docs for {name}")
 
 
@@ -20,6 +21,7 @@ def hello(
         str, typer.Option("--color", help="The color of the output")
     ] = None,
 ):
+    """Some docstring content"""
     _str = ""
     if caps:
         _str = f"Hello {name.capitalize()}"
