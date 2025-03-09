@@ -24,6 +24,8 @@ theme:
     - search.highlight
     - search.suggest
     - toc.follow
+watch:
+  - src/
 
 nav:
   - Home: index.md
