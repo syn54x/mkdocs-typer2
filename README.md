@@ -1,7 +1,7 @@
 # mkdocs-typer2
 
 [![PyPI version](https://badge.fury.io/py/mkdocs-typer2.svg)](https://badge.fury.io/py/mkdocs-typer2)
-![Python 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)
+![Python 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12|%203.13-blue.svg)
 ![Ruff](https://img.shields.io/badge/linted%20by-ruff-FFC107.svg)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Downloads](https://static.pepy.tech/badge/mkdocs-typer2)](https://pepy.tech/project/mkdocs-typer2)
