@@ -2,6 +2,7 @@ import pytest
 
 from mkdocs_typer2.pretty import (
     Argument,
+    CommandEntry,
     CommandNode,
     Option,
     parse_markdown_to_tree,
@@ -245,3 +246,40 @@ $ typer hello [OPTIONS] NAME
     assert len(hello_cmd.options) > 0
     assert any(arg.name == "NAME" for arg in hello_cmd.arguments)
     assert any(opt.name == "--caps / --no-caps" for opt in hello_cmd.options)
+
+
+def test_parse_markdown_with_commands():
+    markdown = """
+# mycli
+
+**Commands**:
+* `foo`: Foo command description
+* `bar`: Bar command description
+"""
+    result = parse_markdown_to_tree(markdown)
+    assert len(result.commands) == 2
+    assert result.commands[0].name == "foo"
+    assert result.commands[0].description == "Foo command description"
+    assert result.commands[1].name == "bar"
+    assert result.commands[1].description == "Bar command description"
+
+
+def test_tree_to_markdown_with_commands():
+    cmd = CommandNode(
+        name="mycli",
+        description="A test CLI",
+        commands=[
+            CommandEntry(name="foo", description="Foo command description"),
+            CommandEntry(name="bar", description="Bar command description"),
+        ],
+    )
+    markdown = tree_to_markdown(cmd)
+    assert "| Name | Description |" in markdown
+    assert "`foo`" in markdown and "Foo command description" in markdown
+    assert "`bar`" in markdown and "Bar command description" in markdown
+
+
+def test_tree_to_markdown_no_commands():
+    cmd = CommandNode(name="mycli", description="A test CLI", commands=[])
+    markdown = tree_to_markdown(cmd)
+    assert "*No commands available*" in markdown

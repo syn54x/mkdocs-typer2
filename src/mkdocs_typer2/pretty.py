@@ -18,6 +18,11 @@ class Argument(BaseModel):
     required: bool = False
 
 
+class CommandEntry(BaseModel):
+    name: str
+    description: str = ""
+
+
 class CommandNode(BaseModel):
     name: str
     description: str = ""
@@ -25,6 +30,7 @@ class CommandNode(BaseModel):
     arguments: List[Argument] = []
     options: List[Option] = []
     subcommands: List["CommandNode"] = []
+    commands: List[CommandEntry] = []
 
 
 def parse_markdown_to_tree(content: str) -> CommandNode:
@@ -68,6 +74,7 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
     current_section = None
     in_description = False
     desc_lines = []
+    in_commands_section = False
 
     i = 0
     while i < len(lines):
@@ -81,6 +88,7 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
             current_command = new_cmd
             in_description = True  # Start capturing description for this command
             desc_lines = []
+            in_commands_section = False
 
         elif (
             in_description
@@ -97,6 +105,7 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
             if in_description and desc_lines:
                 current_command.description = "\n".join(desc_lines)
             in_description = False
+            in_commands_section = False
             # Find the line with usage example
             j = i
             while j < len(lines) and "$ " not in lines[j]:
@@ -110,6 +119,7 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
                 current_command.description = "\n".join(desc_lines)
             in_description = False
             current_section = "arguments"
+            in_commands_section = False
 
         elif line.startswith("**Options**:"):
             # End of description section
@@ -117,12 +127,15 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
                 current_command.description = "\n".join(desc_lines)
             in_description = False
             current_section = "options"
+            in_commands_section = False
 
         elif line.startswith("**Commands**:"):
-            # End of description section
+            # End of description section, start commands section
             if in_description and desc_lines:
                 current_command.description = "\n".join(desc_lines)
             in_description = False
+            current_section = None
+            in_commands_section = True
 
         elif line.startswith("* `") and current_section == "options":
             # Parse option
@@ -146,6 +159,23 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
                     name=name, description=desc.strip(), required=modifier == "required"
                 )
                 current_command.arguments.append(argument)
+
+        elif line.startswith("* `") and in_commands_section:
+            # Parse command name and description
+            match = re.match(r"\* `(.*?)`: (.*)", line)
+            if match:
+                cmd_name, cmd_desc = match.groups()
+                current_command.commands.append(
+                    CommandEntry(name=cmd_name, description=cmd_desc.strip())
+                )
+            else:
+                # Fallback: just the name
+                match = re.match(r"\* `(.*?)`:?", line)
+                if match:
+                    cmd_name = match.group(1)
+                    current_command.commands.append(
+                        CommandEntry(name=cmd_name, description="")
+                    )
 
         i += 1
 
@@ -191,6 +221,14 @@ def tree_to_markdown(command_node: CommandNode) -> str:
 
         return "\n".join(rows)
 
+    def format_commands_table(commands: list[CommandEntry]) -> str:
+        if not commands:
+            return "*No commands available*"
+        rows = [format_table_row("Name", "Description"), format_table_row("---", "---")]
+        for cmd in commands:
+            rows.append(format_table_row(f"`{cmd.name}`", cmd.description))
+        return "\n".join(rows)
+
     def format_usage(cmd_name: str, usage: Optional[str]) -> str:
         if not usage:
             return "*No usage specified*"
@@ -213,6 +251,9 @@ def tree_to_markdown(command_node: CommandNode) -> str:
         "",
         "## Options\n",
         format_options_table(command_node.options),
+        "",
+        "## Commands\n",
+        format_commands_table(command_node.commands),
     ]
 
     # Add subcommands if they exist
