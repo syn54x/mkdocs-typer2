@@ -11,7 +11,7 @@ def docs(name: str = typer.Option(..., help="The name of the project")):
     print(f"Generating docs for {name}")
 
 
-@app.command()
+@app.command(hidden=True)
 def hello(
     name: Annotated[str, typer.Argument(..., help="The name of the person to greet")],
     caps: Annotated[
