@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Fixed
+- Fixed issue where line breaks in help text weren't preserved when using `pretty` formatting option
+- Line breaks in CLI help messages and docstrings are now properly rendered in the generated documentation
+
 ## [0.1.4] - 2025-03-15
 
 ### Added

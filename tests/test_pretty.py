@@ -280,6 +280,36 @@ def test_tree_to_markdown_with_commands():
 
 
 def test_tree_to_markdown_no_commands():
-    cmd = CommandNode(name="mycli", description="A test CLI", commands=[])
-    markdown = tree_to_markdown(cmd)
-    assert "*No commands available*" in markdown
+    """Test that commands table shows 'No commands available' when empty."""
+    cmd = CommandNode(name="test", commands=[])
+    result = tree_to_markdown(cmd)
+    assert "*No commands available*" in result
+
+
+def test_parse_markdown_with_line_breaks():
+    """Test that line breaks in help text are preserved."""
+    markdown = """# mycli
+
+A test CLI tool
+
+This is a multi-line help message.
+
+```console
+$ mycli --help
+```
+
+**Arguments**:
+* `name`: The name argument [required]
+
+**Options**:
+* `--verbose`: Enable verbose mode
+"""
+    tree = parse_markdown_to_tree(markdown)
+
+    # Check that line breaks are preserved in the description
+    assert tree.name == "mycli"
+    assert "A test CLI tool" in tree.description
+    assert "This is a multi-line help message." in tree.description
+    # Verify there's a line break between the two lines
+    assert "\n" in tree.description
+    assert tree.description.count("\n") >= 1

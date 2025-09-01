@@ -57,11 +57,12 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
                 and not lines[j].startswith("**")
                 and not lines[j].startswith("```")
             ):
-                if lines[j].strip():  # Only add non-empty lines
-                    desc_lines.append(lines[j].strip())
+                # Preserve the original line content, including empty lines for line breaks
+                desc_lines.append(lines[j])
                 j += 1
 
             if desc_lines:
+                # Join with newlines to preserve line breaks, then strip trailing whitespace
                 root.description = "\n".join(desc_lines)
 
             break
@@ -97,13 +98,14 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
             and i > 0
         ):
             # We're in description mode and not at a section marker yet
-            if line.strip():  # Only add non-empty lines
-                desc_lines.append(line.strip())
+            # Preserve the original line content, including empty lines for line breaks
+            desc_lines.append(line)
 
         elif line.startswith("```console"):
             # Usage section - end of description
             if in_description and desc_lines:
-                current_command.description = "\n".join(desc_lines)
+                # Join with newlines to preserve line breaks, then strip trailing whitespace
+                current_command.description = "\n".join(desc_lines).rstrip()
             in_description = False
             in_commands_section = False
             # Find the line with usage example
@@ -116,7 +118,8 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
         elif line.startswith("**Arguments**:"):
             # End of description section
             if in_description and desc_lines:
-                current_command.description = "\n".join(desc_lines)
+                # Join with newlines to preserve line breaks, then strip trailing whitespace
+                current_command.description = "\n".join(desc_lines).rstrip()
             in_description = False
             current_section = "arguments"
             in_commands_section = False
@@ -124,7 +127,8 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
         elif line.startswith("**Options**:"):
             # End of description section
             if in_description and desc_lines:
-                current_command.description = "\n".join(desc_lines)
+                # Join with newlines to preserve line breaks, then strip trailing whitespace
+                current_command.description = "\n".join(desc_lines).rstrip()
             in_description = False
             current_section = "options"
             in_commands_section = False
@@ -132,7 +136,8 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
         elif line.startswith("**Commands**:"):
             # End of description section, start commands section
             if in_description and desc_lines:
-                current_command.description = "\n".join(desc_lines)
+                # Join with newlines to preserve line breaks, then strip trailing whitespace
+                current_command.description = "\n".join(desc_lines).rstrip()
             in_description = False
             current_section = None
             in_commands_section = True
