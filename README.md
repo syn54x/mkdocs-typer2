@@ -8,7 +8,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.12|%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PyPI](https://img.shields.io/pypi/v/mkdocs-typer2?style=for-the-badge)](https://pypi.org/project/mkdocs-typer2/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](https://opensource.org/licenses/Apache-2.0)
-[![Downloads](https://img.shields.io/badge/Downloads-2.5k-blue?style=for-the-badge)](https://pepy.tech/project/mkdocs-typer2)
+[![Downloads](https://img.shields.io/pepy/dt/mkdocs-typer2?style=for-the-badge)](https://pepy.tech/project/mkdocs-typer2)
 [![Codecov](https://img.shields.io/codecov/c/github/syn54x/mkdocs-typer2?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io/gh/syn54x/mkdocs-typer2)
 [![Issues](https://img.shields.io/github/issues/syn54x/mkdocs-typer2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/syn54x/mkdocs-typer2/issues)
 
