@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.1.7] - 2026-01-13
+
+### Fixed
+- Fixed issue where nested subcommands (sub-app commands added via `add_typer()`) were not being properly parsed and rendered in the generated CLI documentation when using `pretty=True`
+- Nested subcommands are now correctly detected and rendered with proper hierarchy in the generated documentation
+
+### Changed
+- Refactored CLI code structure by moving CLI modules into a `cli/` package for better organization
+- Updated entry points in `pyproject.toml` to reflect the new CLI module path
+- Enhanced markdown parsing to support level 3 headings (`###`) for nested subcommands in addition to level 2 headings (`##`) for subcommands
+
 ## [0.1.6] - 2025-09-01
 
 ### Fixed
