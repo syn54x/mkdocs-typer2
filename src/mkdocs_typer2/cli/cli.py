@@ -2,7 +2,11 @@ from typing import Annotated
 
 import typer
 
+from .sub_cli import app as sub_app
+
 app = typer.Typer(help="A sample CLI\n\nThis is a multi-line help message.")
+
+app.add_typer(sub_app, name="subapp")
 
 
 @app.command()
