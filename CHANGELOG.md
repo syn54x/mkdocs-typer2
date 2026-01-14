@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-01-13
+
+### Fixed
+- Standardized subcommand headings in markdown output for consistency
+- Changed headings from "Sub Commands" to "Subcommands" in generated documentation
+- Adjusted hierarchy of nested subcommand headings for improved clarity and uniformity
+
 ## [0.1.7] - 2026-01-13
 
 ### Fixed
