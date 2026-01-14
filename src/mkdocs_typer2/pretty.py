@@ -76,16 +76,40 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
     in_description = False
     desc_lines = []
     in_commands_section = False
+    current_subcommand_parent = (
+        None  # Track the parent subcommand for nested subcommands
+    )
 
     i = 0
     while i < len(lines):
         line = lines[i]
 
         if line.startswith("## `"):
-            # New subcommand
+            # New subcommand (level 2)
             cmd_name = line.replace("##", "")
             new_cmd = CommandNode(name=cmd_name)
             root.subcommands.append(new_cmd)
+            current_command = new_cmd
+            current_subcommand_parent = (
+                new_cmd  # This becomes the parent for nested subcommands
+            )
+            in_description = True  # Start capturing description for this command
+            desc_lines = []
+            in_commands_section = False
+
+        elif line.startswith("### `"):
+            # End description collection for parent subcommand if in progress
+            if in_description and desc_lines and current_subcommand_parent:
+                current_subcommand_parent.description = "\n".join(desc_lines).rstrip()
+                in_description = False
+            # New nested subcommand (level 3) - belongs to the most recent ## subcommand
+            cmd_name = line.replace("###", "")
+            new_cmd = CommandNode(name=cmd_name)
+            if current_subcommand_parent:
+                current_subcommand_parent.subcommands.append(new_cmd)
+            else:
+                # Fallback: if no parent, add to root (shouldn't happen in typer output)
+                root.subcommands.append(new_cmd)
             current_command = new_cmd
             in_description = True  # Start capturing description for this command
             desc_lines = []
@@ -95,6 +119,7 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
             in_description
             and not line.startswith("**")
             and not line.startswith("```")
+            and not line.startswith("#")
             and i > 0
         ):
             # We're in description mode and not at a section marker yet
@@ -285,5 +310,31 @@ def tree_to_markdown(command_node: CommandNode) -> str:
                     format_options_table(subcmd.options),
                 ]
             )
+            # Recursively render nested subcommands
+            if subcmd.subcommands:
+                parts.extend(["", "##### Sub Commands"])
+                for nested_subcmd in subcmd.subcommands:
+                    parts.extend(
+                        [
+                            "",
+                            f"###### {nested_subcmd.name}",
+                            "",
+                            nested_subcmd.description
+                            if nested_subcmd.description
+                            else "*No description available*",
+                            "",
+                            "####### Usage",
+                            format_usage(
+                                f"{command_node.name} {subcmd.name} {nested_subcmd.name}",
+                                nested_subcmd.usage,
+                            ),
+                            "",
+                            "####### Arguments",
+                            format_arguments_table(nested_subcmd.arguments),
+                            "",
+                            "####### Options",
+                            format_options_table(nested_subcmd.options),
+                        ]
+                    )
 
     return "\n".join(parts)
