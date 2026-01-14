@@ -288,7 +288,7 @@ def tree_to_markdown(command_node: CommandNode) -> str:
 
     # Add subcommands if they exist
     if command_node.subcommands:
-        parts.extend(["", "## Sub Commands"])
+        parts.extend(["", "## Subcommands"])
 
         for subcmd in command_node.subcommands:
             parts.extend(
@@ -312,27 +312,27 @@ def tree_to_markdown(command_node: CommandNode) -> str:
             )
             # Recursively render nested subcommands
             if subcmd.subcommands:
-                parts.extend(["", "##### Sub Commands"])
+                parts.extend(["", "#### Subcommands"])
                 for nested_subcmd in subcmd.subcommands:
                     parts.extend(
                         [
                             "",
-                            f"###### {nested_subcmd.name}",
+                            f"##### {nested_subcmd.name}",
                             "",
                             nested_subcmd.description
                             if nested_subcmd.description
                             else "*No description available*",
                             "",
-                            "####### Usage",
+                            "###### Usage",
                             format_usage(
                                 f"{command_node.name} {subcmd.name} {nested_subcmd.name}",
                                 nested_subcmd.usage,
                             ),
                             "",
-                            "####### Arguments",
+                            "###### Arguments",
                             format_arguments_table(nested_subcmd.arguments),
                             "",
-                            "####### Options",
+                            "###### Options",
                             format_options_table(nested_subcmd.options),
                         ]
                     )
