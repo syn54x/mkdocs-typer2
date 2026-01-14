@@ -1,6 +1,7 @@
 import pytest
 from typer.testing import CliRunner
-from mkdocs_typer2.cli import app
+
+from mkdocs_typer2.cli.cli import app
 
 runner = CliRunner()
 
