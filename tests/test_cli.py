@@ -31,3 +31,10 @@ def test_hello_command(name, caps, color, expected):
     result = runner.invoke(app, args)
     assert result.exit_code == 0
     assert expected in result.stdout
+
+
+@pytest.mark.parametrize("command", ["sub-command", "sub-command-2"])
+def test_subcommands(command):
+    result = runner.invoke(app, ["subapp", command, "--name", "Taylor"])
+    assert result.exit_code == 0
+    assert "Taylor" in result.stdout
