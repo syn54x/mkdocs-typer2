@@ -5,24 +5,33 @@ import xml.etree.ElementTree as etree
 
 from markdown.blockprocessors import BlockProcessor
 
-from .pretty import parse_markdown_to_tree, tree_to_markdown
+from .pretty import (
+    build_tree_from_click_app,
+    parse_markdown_to_tree,
+    tree_to_markdown,
+    tree_to_markdown_list,
+)
 
 
 class TyperExtension(markdown.Extension):
-    def __init__(self, *args, pretty: bool = None, **kwargs):
+    def __init__(self, *args, pretty: bool = None, engine: str = "legacy", **kwargs):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
+        self.engine = engine
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
         md.parser.blockprocessors.register(
-            TyperProcessor(md.parser, pretty=self.pretty), "typer", 175
+            TyperProcessor(md.parser, pretty=self.pretty, engine=self.engine),
+            "typer",
+            175,
         )
 
 
 class TyperProcessor(BlockProcessor):
-    def __init__(self, *args, pretty: bool = None, **kwargs):
+    def __init__(self, *args, pretty: bool = None, engine: str = "legacy", **kwargs):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
+        self.engine = engine
 
     def test(self, parent, block):
         return block.strip().startswith(":::") and "mkdocs-typer2" in block
@@ -35,6 +44,7 @@ class TyperProcessor(BlockProcessor):
         module_match = re.search(r":module:\s*(\S+)", block)
         name_match = re.search(r":name:\s*(\S+)", block)
         pretty_match = re.search(r":pretty:\s*(\S+)", block)
+        engine_match = re.search(r":engine:\s*(\S+)", block)
         if not module_match:
             raise ValueError("Module is required")
 
@@ -52,28 +62,48 @@ class TyperProcessor(BlockProcessor):
             elif block_pretty_value in ["false", "0", "no"]:
                 use_pretty = False
 
-        # Run typer command
-        cmd = f"typer {module} utils docs --name {name}"
-        # print(cmd)
-        result = subprocess.run(cmd.split(), capture_output=True, text=True)
-
-        if result.returncode == 0:
-            if use_pretty:
-                md_content = self.pretty_output(result.stdout)
+        # Determine engine (legacy or native)
+        use_engine = self.engine or "legacy"
+        if engine_match:
+            block_engine_value = engine_match.group(1).lower()
+            if block_engine_value in ["legacy", "native"]:
+                use_engine = block_engine_value
             else:
-                md_content = result.stdout
+                raise ValueError("Engine must be 'legacy' or 'native'")
 
-            html_output = markdown.markdown(md_content, extensions=["tables"])
+        if use_engine == "legacy":
+            # Run typer command
+            cmd = f"typer {module} utils docs --name {name}"
+            # print(cmd)
+            result = subprocess.run(cmd.split(), capture_output=True, text=True)
 
-            div = etree.SubElement(parent, "div")
-            div.set("class", "typer-docs")
-            div.extend(etree.fromstring(f"<div>{html_output}</div>"))
+            if result.returncode == 0:
+                if use_pretty:
+                    md_content = self.pretty_output(result.stdout)
+                else:
+                    md_content = result.stdout
+            else:
+                return True
+        else:
+            md_content = self.native_output(module, name, use_pretty)
+
+        html_output = markdown.markdown(md_content, extensions=["tables"])
+
+        div = etree.SubElement(parent, "div")
+        div.set("class", "typer-docs")
+        div.extend(etree.fromstring(f"<div>{html_output}</div>"))
 
         return True
 
     def pretty_output(self, md_content: str) -> str:
         tree = parse_markdown_to_tree(md_content)
         return tree_to_markdown(tree)
+
+    def native_output(self, module: str, name: str, pretty: bool) -> str:
+        tree = build_tree_from_click_app(module, name)
+        if pretty:
+            return tree_to_markdown(tree)
+        return tree_to_markdown_list(tree)
 
 
 def makeExtension(**kwargs):

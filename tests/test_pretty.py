@@ -1,12 +1,23 @@
+import sys
+import types
+
+import click
 import pytest
+import typer
 
 from mkdocs_typer2.pretty import (
     Argument,
     CommandEntry,
     CommandNode,
     Option,
+    build_tree_from_click_app,
+    _format_option_default,
+    _format_option_name,
+    _format_usage,
+    _resolve_click_command,
     parse_markdown_to_tree,
     tree_to_markdown,
+    tree_to_markdown_list,
 )
 
 
@@ -83,6 +94,30 @@ def test_tree_to_markdown_with_subcommands():
     assert "### init" in markdown
     assert "Initialize project" in markdown
     assert "`--force`" in markdown
+
+
+def test_tree_to_markdown_with_nested_subcommands():
+    cmd = CommandNode(
+        name="mycli",
+        description="Root command",
+        subcommands=[
+            CommandNode(
+                name="parent",
+                description="Parent command",
+                subcommands=[
+                    CommandNode(
+                        name="child",
+                        description="Child command",
+                        options=[Option(name="--dry-run", description="Dry run")],
+                    )
+                ],
+            )
+        ],
+    )
+    markdown = tree_to_markdown(cmd)
+    assert "#### Subcommands" in markdown
+    assert "##### child" in markdown
+    assert "`--dry-run`" in markdown
 
 
 def test_empty_tables():
@@ -313,3 +348,174 @@ $ mycli --help
     # Verify there's a line break between the two lines
     assert "\n" in tree.description
     assert tree.description.count("\n") >= 1
+
+
+def test_parse_markdown_without_root_heading():
+    markdown = """
+No heading here
+
+**Options**:
+* `--verbose`: Enable verbose mode
+"""
+    tree = parse_markdown_to_tree(markdown)
+    assert tree.name == "Unknown Command"
+
+
+def test_parse_markdown_with_nested_subcommand():
+    markdown = """
+# mycli
+
+## `parent`
+
+Parent description
+
+### `child`
+
+Child description
+
+```console
+$ mycli parent child
+```
+"""
+    tree = parse_markdown_to_tree(markdown)
+    assert len(tree.subcommands) == 1
+    assert len(tree.subcommands[0].subcommands) == 1
+    assert "Child description" in tree.subcommands[0].subcommands[0].description
+
+
+def test_build_tree_from_click_app():
+    tree = build_tree_from_click_app("mkdocs_typer2.cli.cli", "app")
+    assert tree.name == "app"
+    assert tree.subcommands
+    assert any(cmd.name == "docs" for cmd in tree.commands)
+
+
+def test_build_tree_from_click_app_falls_back_to_default():
+    module = types.ModuleType("tests.fake_module")
+    module.app = typer.Typer()
+
+    @module.app.command()
+    def hello():
+        return None
+
+    sys.modules[module.__name__] = module
+    try:
+        tree = build_tree_from_click_app(module.__name__, "missing")
+        assert tree.name == "missing"
+    finally:
+        del sys.modules[module.__name__]
+
+
+def test_build_tree_from_click_app_missing_app_raises():
+    module = types.ModuleType("tests.fake_module_missing")
+    sys.modules[module.__name__] = module
+    try:
+        with pytest.raises(ValueError, match="Unable to resolve Typer app"):
+            build_tree_from_click_app(module.__name__, "")
+    finally:
+        del sys.modules[module.__name__]
+
+
+def test_resolve_click_command_variants():
+    app = typer.Typer()
+
+    @app.command()
+    def hello():
+        return None
+
+    assert isinstance(_resolve_click_command(app), click.core.Command)
+    command = click.Command("cmd")
+    assert _resolve_click_command(command) is command
+    with pytest.raises(ValueError, match="Resolved object is not a Typer or Click"):
+        _resolve_click_command(object())
+
+
+def test_format_option_helpers():
+    opt = click.Option(["--caps/--no-caps"], default=False, help="Caps")
+    assert _format_option_name(opt) == "--caps / --no-caps"
+    assert _format_option_default(opt) == "no-caps"
+    opt_true = click.Option(["--caps/--no-caps"], default=True, help="Caps")
+    assert _format_option_default(opt_true) == "caps"
+    assert _format_option_default(click.Option(["--name"], default=None)) is None
+
+
+def test_format_usage_prefix():
+    assert _format_usage("Usage: mycli [OPTIONS]") == "mycli [OPTIONS]"
+    assert _format_usage("") is None
+
+
+def test_tree_to_markdown_list_format():
+    tree = CommandNode(
+        name="mycli",
+        description="A test CLI",
+        usage="mycli [OPTIONS] COMMAND [ARGS]...",
+        arguments=[Argument(name="NAME", description="The name", required=True)],
+        options=[
+            Option(name="--verbose", description="Verbose output", default="false"),
+            Option(name="--required", description="Required opt", required=True),
+        ],
+        commands=[CommandEntry(name="run", description="Run command")],
+    )
+    markdown = tree_to_markdown_list(tree)
+    assert "* `NAME`" in markdown
+    assert "* `--verbose`" in markdown
+    assert "* `--required`" in markdown
+    assert "* `run`" in markdown
+
+
+def test_tree_to_markdown_list_empty_sections():
+    tree = CommandNode(name="mycli")
+    markdown = tree_to_markdown_list(tree)
+    assert "*No arguments available*" in markdown
+    assert "*No options available*" in markdown
+    assert "*No commands available*" in markdown
+    assert "*No usage specified*" in markdown
+
+
+def test_tree_to_markdown_list_with_nested_subcommands():
+    tree = CommandNode(
+        name="mycli",
+        subcommands=[
+            CommandNode(
+                name="parent",
+                subcommands=[
+                    CommandNode(
+                        name="child",
+                        options=[Option(name="--x", description="X option")],
+                    )
+                ],
+            )
+        ],
+    )
+    markdown = tree_to_markdown_list(tree)
+    assert "#### Subcommands" in markdown
+    assert "##### child" in markdown
+    assert "`--x`" in markdown
+
+
+def test_parse_markdown_with_commands_fallback():
+    markdown = """
+# mycli
+
+**Commands**:
+* `foo`
+"""
+    tree = parse_markdown_to_tree(markdown)
+    assert tree.commands[0].name == "foo"
+
+
+def test_parse_markdown_nested_command_without_parent():
+    markdown = """
+# mycli
+
+### `orphan`
+
+Orphan description
+
+```console
+$ mycli orphan
+```
+"""
+    tree = parse_markdown_to_tree(markdown)
+    assert len(tree.subcommands) == 1
+    assert "Orphan description" in tree.subcommands[0].description

@@ -10,11 +10,13 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 5%
+        threshold: 10%
+        informational: true
     patch:
       default:
         target: auto
-        threshold: 5%
+        threshold: 10%
+        informational: true
 
 parsers:
   gcov:

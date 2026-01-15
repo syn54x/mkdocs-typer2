@@ -10,11 +10,18 @@ class MkdocsTyper(BasePlugin):
             "pretty",
             config_options.Type(bool, default=False),
         ),
+        (
+            "engine",
+            config_options.Type(str, default="legacy"),
+        ),
     )
 
     def on_config(self, config, **kwargs) -> dict:
         config["markdown_extensions"].append(
-            makeExtension(pretty=self.config.get("pretty", False))
+            makeExtension(
+                pretty=self.config.get("pretty", False),
+                engine=self.config.get("engine", "legacy"),
+            )
         )
         return config
 
