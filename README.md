@@ -5,7 +5,7 @@
 [![MkDocs](https://img.shields.io/badge/MkDocs-000000?style=for-the-badge&logo=markdown&logoColor=white)](https://www.mkdocs.org/)
 [![Typer](https://img.shields.io/badge/Typer-FF4B4B?style=for-the-badge&logo=python&logoColor=white)](https://typer.tiangolo.com/)
 [![UV](https://img.shields.io/badge/UV-2C2C2C?style=for-the-badge&logo=python&logoColor=white)](https://github.com/astral-sh/uv)
-[![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.12|%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.12|%203.13%20|%203.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PyPI](https://img.shields.io/pypi/v/mkdocs-typer2?style=for-the-badge)](https://pypi.org/project/mkdocs-typer2/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](https://opensource.org/licenses/Apache-2.0)
 [![Downloads](https://img.shields.io/pepy/dt/mkdocs-typer2?style=for-the-badge)](https://pepy.tech/project/mkdocs-typer2)
