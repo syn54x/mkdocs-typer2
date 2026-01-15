@@ -27,18 +27,19 @@ I created this plugin because the original plugin was no longer working for me, 
 - Automatically generates CLI documentation from your Typer commands
 - Supports all Typer command features including arguments, options, and help text
 - Easy to configure and use
-- `pretty` feature for encapsulating arguments & options inside tables instead of lists
+- `pretty` feature for formatting arguments & options as tables
+- `engine` option to select legacy markdown parsing or native Click walking
 - Global plugin configuration or per-documentation block configuration
 
 ## How It Works
 
-The plugin leverages Typer's built-in documentation generation via the `typer <module> utils docs` command to create Markdown documentation. It then processes this Markdown content and integrates it into your MkDocs site.
+The plugin can either parse Typer's generated markdown (legacy) or walk the Click command tree directly (native). Both approaches are rendered as Markdown and integrated into your MkDocs site.
 
 The plugin works by:
 
 1. Registering a Markdown extension that processes special directive blocks
-2. Running the Typer documentation command on your specified module
-3. Optionally reformatting the output to use tables for arguments and options (the "pretty" mode)
+2. Resolving the command tree (legacy: `typer <module> utils docs`, native: Click walk)
+3. Formatting arguments and options as lists or tables based on `pretty`
 4. Integrating the resulting HTML into your MkDocs site
 
 ## Installation
@@ -47,6 +48,12 @@ Install using pip:
 
 ```bash
 pip install mkdocs-typer2
+```
+
+Install using uv:
+
+```bash
+uv add mkdocs-typer2
 ```
 
 ### Requirements
@@ -69,12 +76,35 @@ plugins:
 
 ### Pretty Mode
 
-The plugin offers a `pretty` option that can be set in your `mkdocs.yml` file to enable pretty documentation. This will use markdown tables to format the CLI options and arguments instead of lists:
+The plugin offers a `pretty` option that can be set in your `mkdocs.yml` file to enable table-based formatting for options and arguments:
 
 ```yaml
 plugins:
   - mkdocs-typer2:
       pretty: true
+```
+
+**Options when `:pretty: false`:**
+
+
+**Options**:
+* `--name`: The name of the project  [required]
+
+**Options when `:pretty: true`:**
+
+| Name | Description | Required | Default |
+| --- | --- | --- | --- |
+| `--name` | The name of the project | Yes | - |
+
+
+### Engine Selection
+
+Use `engine` to select how the command tree is built:
+
+```yaml
+plugins:
+  - mkdocs-typer2:
+      engine: native  # or legacy
 ```
 
 ## Usage
@@ -97,6 +127,7 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 
 - `:name:` - The name of the CLI. If left blank, your CLI will simply be named `CLI` in your documentation.
 - `:pretty:` - Set to `true` to enable pretty formatting for this specific documentation block, overriding the global setting.
+- `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
 
 ## Advanced Usage
 
@@ -109,6 +140,7 @@ You can override the global pretty setting for individual documentation blocks:
     :module: my_module.cli
     :name: mycli
     :pretty: true
+    :engine: native
 ```
 
 ### Multiple CLI Documentation
@@ -131,23 +163,33 @@ You can document multiple CLIs in the same MkDocs site by using multiple directi
 
 ## Example
 
-This repository is a good example of how to use the plugin. We have a simple CLI located in `src/mkdocs_typer2/cli.py`.
+This repository is a good example of how to use the plugin. We have a simple CLI located in `src/mkdocs_typer2/cli/cli.py`.
 
 The CLI's documentation is automatically generated using the block level directive in `docs/cli.md`:
 
 ```markdown
 ::: mkdocs-typer2
-    :module: mkdocs_typer2.cli
+    :module: mkdocs_typer2.cli.cli
     :name: mkdocs-typer2
+    :engine: legacy
 ```
 
-And the pretty version in `docs/cli-pretty.md`:
+And the pretty versions in `docs/cli-pretty-legacy.md` and `docs/cli-pretty-native.md`:
 
 ```markdown
 ::: mkdocs-typer2
-    :module: mkdocs_typer2.cli
+    :module: mkdocs_typer2.cli.cli
     :name: mkdocs-typer2
     :pretty: true
+    :engine: legacy
+```
+
+```markdown
+:::: mkdocs-typer2
+    :module: mkdocs_typer2.cli.cli
+    :name: mkdocs-typer2
+    :pretty: true
+    :engine: native
 ```
 
 ## Contributing
