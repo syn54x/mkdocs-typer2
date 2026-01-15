@@ -174,9 +174,7 @@ def test_typer_processor_native_output(pretty_value):
         ("native", "legacy", "legacy"),
     ],
 )
-def test_typer_processor_engine_option(
-    global_engine, block_engine, expected_engine
-):
+def test_typer_processor_engine_option(global_engine, block_engine, expected_engine):
     md = markdown.Markdown()
     processor = TyperProcessor(md.parser, engine=global_engine)
     parent = etree.Element("div")

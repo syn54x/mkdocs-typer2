@@ -372,7 +372,7 @@ Parent description
 ### `child`
 
 Child description
- 
+
 ```console
 $ mycli parent child
 ```
@@ -393,9 +393,11 @@ def test_build_tree_from_click_app():
 def test_build_tree_from_click_app_falls_back_to_default():
     module = types.ModuleType("tests.fake_module")
     module.app = typer.Typer()
+
     @module.app.command()
     def hello():
         return None
+
     sys.modules[module.__name__] = module
     try:
         tree = build_tree_from_click_app(module.__name__, "missing")
@@ -416,9 +418,11 @@ def test_build_tree_from_click_app_missing_app_raises():
 
 def test_resolve_click_command_variants():
     app = typer.Typer()
+
     @app.command()
     def hello():
         return None
+
     assert isinstance(_resolve_click_command(app), click.core.Command)
     command = click.Command("cmd")
     assert _resolve_click_command(command) is command
