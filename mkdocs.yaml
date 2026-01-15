@@ -31,8 +31,9 @@ watch:
 
 nav:
   - Home: index.md
-  - CLI (Old): cli.md
-  - CLI (Pretty): cli-pretty.md
+  - CLI (Legacy): cli.md
+  - CLI (Pretty Legacy): cli-pretty-legacy.md
+  - CLI (Pretty Native): cli-pretty-native.md
   - CHANGELOG: changelog.md
 
 markdown_extensions:
