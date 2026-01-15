@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-01-14
+
+### Added
+- Added `engine` option (global + block-level) to select legacy vs native rendering.
+- Added Click-based native renderer with list/table output based on `pretty`.
+
+### Changed
+- Deprecated legacy markdown-parsing pretty implementation in favor of native engine.
+- Increased test coverage to 99% with new engine and CLI subcommand tests.
+
 ## [0.1.8] - 2026-01-13
 
 ### Fixed
