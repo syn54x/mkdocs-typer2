@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-02
+
+### Changed
+- Constrained the MkDocs dependency to `>=1.6.1,<2` (runtime and dev) so installs stay on the 1.x line until this plugin is validated against MkDocs 2.0.
+
 ## [0.2.0] - 2026-01-14
 
 ### Added
