@@ -40,6 +40,10 @@ markdown_extensions:
   - abbr
   - attr_list
   - admonition
+  - tables
+  - mkdocs_typer2.markdown:makeExtension:
+      pretty: false
+      engine: legacy
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -50,7 +54,6 @@ markdown_extensions:
 
 plugins:
   - search
-  - mkdocs-typer2
   - mkdocstrings:
       handlers:
         python:
