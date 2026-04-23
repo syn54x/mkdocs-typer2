@@ -32,7 +32,7 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - name: Install dependencies
-        run: uv sync -p 3.12
+        run: uv sync -p 3.12 --all-extras --group dev
       - name: deploy
         run: uv run mkdocs gh-deploy --force
         env:

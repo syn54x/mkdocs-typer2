@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-22
+
+### Added
+
+- Optional dependency extra `[zensical]` to install Zensical alongside this package.
+
+### Changed
+
+- **Breaking:** MkDocs is no longer a default dependency. Install `mkdocs-typer2[mkdocs]` (or add MkDocs separately) to use the `mkdocs-typer2` MkDocs plugin entry point.
+- Declared **Python-Markdown** (`markdown` on PyPI) as a direct runtime dependency so the Typer directive works without MkDocs installed.
+- `MkdocsTyper` is loaded lazily from `mkdocs_typer2` so `import mkdocs_typer2` succeeds when only the Markdown extension is needed.
+
+### Removed
+
+- Debug `print` from the Markdown block processor.
+
 ## [0.2.1] - 2026-04-02
 
 ### Changed
