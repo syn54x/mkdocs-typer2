@@ -1,8 +1,8 @@
 import re
-import markdown
 import subprocess
 import xml.etree.ElementTree as etree
 
+import markdown
 from markdown.blockprocessors import BlockProcessor
 
 from .pretty import (
@@ -14,7 +14,9 @@ from .pretty import (
 
 
 class TyperExtension(markdown.Extension):
-    def __init__(self, *args, pretty: bool = None, engine: str = "legacy", **kwargs):
+    def __init__(
+        self, *args, pretty: bool | None = None, engine: str = "legacy", **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
@@ -28,7 +30,9 @@ class TyperExtension(markdown.Extension):
 
 
 class TyperProcessor(BlockProcessor):
-    def __init__(self, *args, pretty: bool = None, engine: str = "legacy", **kwargs):
+    def __init__(
+        self, *args, pretty: bool | None = None, engine: str = "legacy", **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
@@ -38,7 +42,6 @@ class TyperProcessor(BlockProcessor):
 
     def run(self, parent, blocks):
         block = blocks.pop(0)
-        print("Processing block:", block)
 
         # Extract options from the block
         module_match = re.search(r":module:\s*(\S+)", block)

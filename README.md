@@ -12,7 +12,7 @@
 [![Codecov](https://img.shields.io/codecov/c/github/syn54x/mkdocs-typer2?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io/gh/syn54x/mkdocs-typer2)
 [![Issues](https://img.shields.io/github/issues/syn54x/mkdocs-typer2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/syn54x/mkdocs-typer2/issues)
 
-A MkDocs plugin that automatically generates beautiful documentation for your Typer CLI applications.
+A Python-Markdown extension (and optional MkDocs plugin) that automatically generates documentation for your Typer CLI applications. The same extension works with [Zensical](https://zensical.org/) using `markdown_extensions` only.
 
 You might be wondering why there are two plugins for Typer. The [`mkdocs-typer`](https://github.com/bruce-szalwinski/mkdocs-typer) plugin is great, but it hasn't been updated in over a year, and there have been a number of changes to Typer since then. One important change is that Typer now has its own documentation generation system via the `typer <module> utils docs` command. This plugin simply leverages that system to generate the documentation for your Typer CLIs.
 
@@ -23,7 +23,7 @@ I created this plugin because the original plugin was no longer working for me, 
 
 ## Features
 
-- Seamlessly integrates with MkDocs and Material theme
+- Integrates with MkDocs (optional extra) and the Material theme, or with Zensical via Markdown extensions
 - Automatically generates CLI documentation from your Typer commands
 - Supports all Typer command features including arguments, options, and help text
 - Easy to configure and use
@@ -40,32 +40,52 @@ The plugin works by:
 1. Registering a Markdown extension that processes special directive blocks
 2. Resolving the command tree (legacy: `typer <module> utils docs`, native: Click walk)
 3. Formatting arguments and options as lists or tables based on `pretty`
-4. Integrating the resulting HTML into your MkDocs site
+4. Integrating the resulting HTML into the generated site
 
 ## Installation
 
-Install using pip:
+The base package installs the Typer CLI helper, the **Python-Markdown** extension (`mkdocs_typer2.markdown:makeExtension`), and runtime dependencies only. Add MkDocs and/or Zensical when you need them.
+
+**Markdown extension only** (for example with Zensical, or if you register the extension yourself):
 
 ```bash
 pip install mkdocs-typer2
 ```
 
-Install using uv:
+**With MkDocs** (enables the `mkdocs-typer2` plugin entry point):
 
 ```bash
-uv add mkdocs-typer2
+pip install "mkdocs-typer2[mkdocs]"
+```
+
+**With Zensical** (installs the `zensical` CLI into the same environment; you still configure `markdown_extensions` as shown below):
+
+```bash
+pip install "mkdocs-typer2[zensical]"
+```
+
+**Both**:
+
+```bash
+pip install "mkdocs-typer2[mkdocs,zensical]"
+```
+
+Using uv:
+
+```bash
+uv add "mkdocs-typer2[mkdocs]"   # or [zensical] / [mkdocs,zensical]
 ```
 
 ### Requirements
 
 - Python 3.10 or higher
-- MkDocs 1.6.1 or higher
-- Typer 0.12.5 or higher
-- Pydantic 2.9.2 or higher
+- **Always:** Typer 0.12.5 or higher, Pydantic 2.9.2 or higher, Python-Markdown 3.3.6 or higher (declared as `markdown` on PyPI)
+- **Optional:** MkDocs 1.6.1 or higher (install extra `[mkdocs]`)
+- **Optional:** Zensical 0.0.30 or higher (install extra `[zensical]`)
 
 ## Configuration
 
-### Basic Configuration
+### MkDocs
 
 Add the plugin to your `mkdocs.yml` file:
 
@@ -106,6 +126,36 @@ plugins:
   - mkdocs-typer2:
       engine: native  # or legacy
 ```
+
+### Zensical
+
+Zensical uses the same Python-Markdown stack as MkDocs for compatibility, so you enable this project **as a Markdown extension** only. Zensical does not run arbitrary MkDocs Python plugins, so do not list `mkdocs-typer2` under `plugins`.
+
+Install with `pip install "mkdocs-typer2[zensical]"` (or include `zensical` in your environment another way), then register the extension and options that match what you would pass to the MkDocs plugin.
+
+**`mkdocs.yml`** (Zensical reads this format):
+
+```yaml
+markdown_extensions:
+  - tables
+  - mkdocs_typer2.markdown:makeExtension:
+      pretty: false
+      engine: native
+```
+
+The `tables` extension is included here because the extension renders inner CLI markdown with `markdown.markdown(..., extensions=["tables"])`.
+
+**`zensical.toml`** (quoted table key because the factory path contains a colon):
+
+```toml
+[project.markdown_extensions.tables]
+
+[project.markdown_extensions."mkdocs_typer2.markdown:makeExtension"]
+pretty = false
+engine = "native"
+```
+
+If you share one project between MkDocs and Zensical, keep `mkdocs-typer2` out of `plugins` for the Zensical-focused config (or use separate config files) so the Markdown extension is not applied twice.
 
 ## Usage
 
@@ -195,6 +245,12 @@ And the pretty versions in `docs/cli-pretty-legacy.md` and `docs/cli-pretty-nati
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+When working in this repository, sync dependencies (including optional extras used in CI) with:
+
+```bash
+uv sync --all-extras --group dev
+```
 
 ## License
 

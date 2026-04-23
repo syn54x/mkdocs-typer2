@@ -1,10 +1,18 @@
 [project]
 name = "mkdocs-typer2"
-version = "0.2.1"
-description = "Mkdocs plugin for generating Typer CLI docs"
+version = "0.3.0"
+description = "Typer CLI docs for MkDocs (optional) and Zensical via Python-Markdown"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["mkdocs>=1.6.1,<2", "pydantic>=2.9.2", "typer>=0.12.5"]
+dependencies = [
+    "markdown>=3.3.6,<4",
+    "pydantic>=2.9.2",
+    "typer>=0.12.5",
+]
+
+[project.optional-dependencies]
+mkdocs = ["mkdocs>=1.6.1,<2"]
+zensical = ["zensical>=0.0.30,<1"]
 
 [project.scripts]
 "mkdocs-typer2" = "mkdocs_typer2.cli.cli:app"
@@ -30,6 +38,7 @@ dev = [
     "griffe>=1.5.1",
     "markdown-it-py>=3.0.0",
     "pydantic>=2.9.2",
+    "zensical>=0.0.30,<1",
 ]
 
 [tool.pytest.ini_options]
