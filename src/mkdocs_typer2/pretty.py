@@ -68,7 +68,10 @@ def _format_usage(usage_text: str) -> Optional[str]:
     return first_line.strip()
 
 
-def _format_option_name(option: click.Option) -> str:
+def _format_option_name(option: click.Option, ctx: click.Context) -> str:
+    help_record = option.get_help_record(ctx)
+    if help_record:
+        return help_record[0]
     primary = ", ".join(option.opts)
     if option.secondary_opts:
         secondary = " / ".join(option.secondary_opts)
@@ -117,7 +120,7 @@ def _build_tree_from_click_command(
         elif isinstance(param, click.Option):
             node.options.append(
                 Option(
-                    name=_format_option_name(param),
+                    name=_format_option_name(param, ctx),
                     description=(param.help or "").strip(),
                     required=param.required,
                     default=_format_option_default(param),

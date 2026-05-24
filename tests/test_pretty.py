@@ -390,6 +390,33 @@ def test_build_tree_from_click_app():
     assert any(cmd.name == "docs" for cmd in tree.commands)
 
 
+def test_build_tree_from_click_app_includes_choice_options():
+    module = types.ModuleType("tests.choice_module")
+    module.app = typer.Typer()
+
+    @module.app.command()
+    def run(
+        mode: str = typer.Option(
+            "a",
+            click_type=click.Choice(["a", "b", "c"]),
+            help="Mode to use",
+        ),
+    ):
+        pass
+
+    sys.modules[module.__name__] = module
+    try:
+        tree = build_tree_from_click_app(module.__name__, "app")
+        mode_option = next(opt for opt in tree.options if opt.name.startswith("--mode"))
+        assert mode_option.name == "--mode [a|b|c]"
+        markdown = tree_to_markdown(tree)
+        assert "`--mode [a|b|c]`" in markdown
+        list_markdown = tree_to_markdown_list(tree)
+        assert "`--mode [a|b|c]`" in list_markdown
+    finally:
+        del sys.modules[module.__name__]
+
+
 def test_build_tree_from_click_app_falls_back_to_default():
     module = types.ModuleType("tests.fake_module")
     module.app = typer.Typer()
@@ -431,8 +458,9 @@ def test_resolve_click_command_variants():
 
 
 def test_format_option_helpers():
+    ctx = click.Context(click.Command("cmd"))
     opt = click.Option(["--caps/--no-caps"], default=False, help="Caps")
-    assert _format_option_name(opt) == "--caps / --no-caps"
+    assert _format_option_name(opt, ctx) == "--caps / --no-caps"
     assert _format_option_default(opt) == "no-caps"
     opt_true = click.Option(["--caps/--no-caps"], default=True, help="Caps")
     assert _format_option_default(opt_true) == "caps"
