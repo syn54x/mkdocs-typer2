@@ -120,6 +120,32 @@ def _get_short_help(command: click.core.Command) -> str:
     return short_help.strip() if short_help else ""
 
 
+_PARAM_SUFFIX_RE = re.compile(
+    r"\s+\[(required|default:\s*(?P<default_value>[^\]]+))\]\s*$"
+)
+
+
+def _parse_typer_param_line_description(
+    description: str,
+) -> tuple[str, bool, Optional[str]]:
+    """Strip Typer markdown suffixes like ``[required]`` and ``[default: …]``."""
+    text = description.strip()
+    required = False
+    default: Optional[str] = None
+
+    while True:
+        match = _PARAM_SUFFIX_RE.search(text)
+        if not match:
+            break
+        if match.group(1) == "required":
+            required = True
+        else:
+            default = match.group("default_value").strip()
+        text = text[: match.start()].rstrip()
+
+    return text, required, default
+
+
 def _build_tree_from_click_command(
     command: click.core.Command,
     parent_ctx: Optional[click.Context] = None,
@@ -305,27 +331,27 @@ def parse_markdown_to_tree(content: str) -> CommandNode:
             in_commands_section = True
 
         elif line.startswith("* `") and current_section == "options":
-            # Parse option
-            match = re.match(r"\* `(.*?)`: (.*?)(?:\s+\[(\w+)\])?$", line)
+            match = re.match(r"\* `(.*?)`: (.*)$", line)
             if match:
-                name, desc, modifier = match.groups()
-                option = Option(
-                    name=name,
-                    description=desc.strip(),
-                    required=modifier == "required",
-                    default="no-caps" if "default: no-caps" in desc else None,
+                name, raw_desc = match.groups()
+                desc, required, default = _parse_typer_param_line_description(raw_desc)
+                current_command.options.append(
+                    Option(
+                        name=name,
+                        description=desc,
+                        required=required,
+                        default=default,
+                    )
                 )
-                current_command.options.append(option)
 
         elif line.startswith("* `") and current_section == "arguments":
-            # Parse argument
-            match = re.match(r"\* `(.*?)`: (.*?)(?:\s+\[(\w+)\])?$", line)
+            match = re.match(r"\* `(.*?)`: (.*)$", line)
             if match:
-                name, desc, modifier = match.groups()
-                argument = Argument(
-                    name=name, description=desc.strip(), required=modifier == "required"
+                name, raw_desc = match.groups()
+                desc, required, _default = _parse_typer_param_line_description(raw_desc)
+                current_command.arguments.append(
+                    Argument(name=name, description=desc, required=required)
                 )
-                current_command.arguments.append(argument)
 
         elif line.startswith("* `") and in_commands_section:
             # Parse command name and description
