@@ -298,7 +298,9 @@ $ typer hello [OPTIONS] NAME
     assert len(hello_cmd.arguments) > 0
     assert len(hello_cmd.options) > 0
     assert any(arg.name == "NAME" for arg in hello_cmd.arguments)
-    caps_opt = next(opt for opt in hello_cmd.options if opt.name == "--caps / --no-caps")
+    caps_opt = next(
+        opt for opt in hello_cmd.options if opt.name == "--caps / --no-caps"
+    )
     assert caps_opt.description == "Whether to capitalize the name"
     assert caps_opt.default == "no-caps"
     assert "[default:" not in caps_opt.description
