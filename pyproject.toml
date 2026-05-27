@@ -1,6 +1,6 @@
 [project]
 name = "mkdocs-typer2"
-version = "0.3.0"
+version = "0.3.1"
 description = "Typer CLI docs for MkDocs (optional) and Zensical via Python-Markdown"
 readme = "README.md"
 requires-python = ">=3.10"
