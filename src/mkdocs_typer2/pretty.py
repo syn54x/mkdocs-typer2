@@ -51,11 +51,18 @@ def build_tree_from_click_app(module: str, name: str) -> CommandNode:
     return _build_tree_from_click_command(command, display_name=display_name)
 
 
+def _is_click_group(command: object) -> bool:
+    commands = getattr(command, "commands", None)
+    return isinstance(commands, dict)
+
+
 def _resolve_click_command(app: object) -> click.core.Command:
-    if isinstance(app, click.core.Command):
-        return app
     if isinstance(app, typer.Typer):
         return typer.main.get_command(app)
+    if isinstance(app, click.core.Command) or (
+        callable(getattr(app, "get_params", None)) and getattr(app, "name", None)
+    ):
+        return app  # type: ignore[return-value]
     raise ValueError("Resolved object is not a Typer or Click command.")
 
 
@@ -68,7 +75,29 @@ def _format_usage(usage_text: str) -> Optional[str]:
     return first_line.strip()
 
 
-def _format_option_name(option: click.Option) -> str:
+def _format_choice_metavar(option: click.Option) -> Optional[str]:
+    param_types = [option.type, getattr(option.type, "func", None)]
+    for param_type in param_types:
+        if param_type is None:
+            continue
+        choices = getattr(param_type, "choices", None)
+        if choices is not None:
+            return f"[{'|'.join(str(choice) for choice in choices)}]"
+    return None
+
+
+def _format_option_name(option: click.Option, ctx: click.Context) -> str:
+    choice_metavar = _format_choice_metavar(option)
+    if choice_metavar:
+        primary = ", ".join(option.opts)
+        if option.secondary_opts:
+            secondary = " / ".join(option.secondary_opts)
+            return f"{primary} / {secondary}"
+        return f"{primary} {choice_metavar}"
+
+    help_record = option.get_help_record(ctx)
+    if help_record:
+        return help_record[0]
     primary = ", ".join(option.opts)
     if option.secondary_opts:
         secondary = " / ".join(option.secondary_opts)
@@ -105,7 +134,8 @@ def _build_tree_from_click_command(
     )
 
     for param in command.params:
-        if isinstance(param, click.Argument):
+        param_type = getattr(param, "param_type_name", None)
+        if param_type == "argument":
             arg_name = getattr(param, "human_readable_name", None) or param.name
             node.arguments.append(
                 Argument(
@@ -114,10 +144,10 @@ def _build_tree_from_click_command(
                     required=param.required,
                 )
             )
-        elif isinstance(param, click.Option):
+        elif param_type == "option":
             node.options.append(
                 Option(
-                    name=_format_option_name(param),
+                    name=_format_option_name(param, ctx),
                     description=(param.help or "").strip(),
                     required=param.required,
                     default=_format_option_default(param),
@@ -125,7 +155,7 @@ def _build_tree_from_click_command(
                 )
             )
 
-    if isinstance(command, click.core.Group):
+    if _is_click_group(command):
         for subcommand in command.commands.values():
             node.commands.append(
                 CommandEntry(

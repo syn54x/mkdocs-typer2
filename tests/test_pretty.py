@@ -388,6 +388,39 @@ def test_build_tree_from_click_app():
     assert tree.name == "app"
     assert tree.subcommands
     assert any(cmd.name == "docs" for cmd in tree.commands)
+    export = next(node for node in tree.subcommands if node.name == "export")
+    option_names = {opt.name for opt in export.options}
+    assert "--detail [full|minimal]" in option_names
+    assert "--format [json|yaml|markdown]" in option_names
+    assert "--retries INTEGER" in option_names
+    assert "--config PATH" in option_names
+
+
+def test_build_tree_from_click_app_includes_choice_options():
+    module = types.ModuleType("tests.choice_module")
+    module.app = typer.Typer()
+
+    @module.app.command()
+    def run(
+        mode: str = typer.Option(
+            "a",
+            click_type=click.Choice(["a", "b", "c"]),
+            help="Mode to use",
+        ),
+    ):
+        pass
+
+    sys.modules[module.__name__] = module
+    try:
+        tree = build_tree_from_click_app(module.__name__, "app")
+        mode_option = next(opt for opt in tree.options if opt.name.startswith("--mode"))
+        assert mode_option.name == "--mode [a|b|c]"
+        markdown = tree_to_markdown(tree)
+        assert "`--mode [a|b|c]`" in markdown
+        list_markdown = tree_to_markdown_list(tree)
+        assert "`--mode [a|b|c]`" in list_markdown
+    finally:
+        del sys.modules[module.__name__]
 
 
 def test_build_tree_from_click_app_falls_back_to_default():
@@ -423,7 +456,7 @@ def test_resolve_click_command_variants():
     def hello():
         return None
 
-    assert isinstance(_resolve_click_command(app), click.core.Command)
+    assert _resolve_click_command(app).name == "hello"
     command = click.Command("cmd")
     assert _resolve_click_command(command) is command
     with pytest.raises(ValueError, match="Resolved object is not a Typer or Click"):
@@ -431,8 +464,9 @@ def test_resolve_click_command_variants():
 
 
 def test_format_option_helpers():
+    ctx = click.Context(click.Command("cmd"))
     opt = click.Option(["--caps/--no-caps"], default=False, help="Caps")
-    assert _format_option_name(opt) == "--caps / --no-caps"
+    assert _format_option_name(opt, ctx) == "--caps / --no-caps"
     assert _format_option_default(opt) == "no-caps"
     opt_true = click.Option(["--caps/--no-caps"], default=True, help="Caps")
     assert _format_option_default(opt_true) == "caps"
