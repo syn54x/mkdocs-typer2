@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-27
+
+### Fixed
+
+- Native engine docs now show `click.Choice`, `Enum`, and type metvars in option names (e.g. `--mode [a|b|c]`), including Typer 0.26 `FuncParamType` wrappers ([#32](https://github.com/syn54x/mkdocs-typer2/pull/32), [#31](https://github.com/syn54x/mkdocs-typer2/issues/31)).
+- Legacy pretty mode populates the Default column from Typer markdown suffixes (`[default: …]`, `[required]`) instead of leaving defaults in descriptions ([#33](https://github.com/syn54x/mkdocs-typer2/pull/33), [#30](https://github.com/syn54x/mkdocs-typer2/issues/30)).
+
+### Added
+
+- Sample CLI `export` command demonstrating Choice, Enum, type metvars, and custom metavar in generated docs.
+
 ## [0.3.0] - 2026-04-22
 
 ### Added
