@@ -10,11 +10,12 @@ from mkdocs_typer2.pretty import (
     CommandEntry,
     CommandNode,
     Option,
-    build_tree_from_click_app,
     _format_option_default,
     _format_option_name,
     _format_usage,
+    _parse_typer_param_line_description,
     _resolve_click_command,
+    build_tree_from_click_app,
     parse_markdown_to_tree,
     tree_to_markdown,
     tree_to_markdown_list,
@@ -134,14 +135,31 @@ def test_option_with_default():
 # mycli
 
 **Options**:
-* `--style`: Output style default: no-caps
+* `--style`: Output style  [default: no-caps]
 """
 
     result = parse_markdown_to_tree(markdown)
 
     assert len(result.options) == 1
     assert result.options[0].name == "--style"
+    assert result.options[0].description == "Output style"
     assert result.options[0].default == "no-caps"
+
+
+def test_parse_typer_param_line_description():
+    desc, required, default = _parse_typer_param_line_description(
+        "Whether to capitalize the name  [default: no-caps]"
+    )
+    assert desc == "Whether to capitalize the name"
+    assert not required
+    assert default == "no-caps"
+
+    desc, required, default = _parse_typer_param_line_description(
+        "The name of the project  [required]"
+    )
+    assert desc == "The name of the project"
+    assert required
+    assert default is None
 
 
 @pytest.mark.parametrize(
@@ -280,7 +298,12 @@ $ typer hello [OPTIONS] NAME
     assert len(hello_cmd.arguments) > 0
     assert len(hello_cmd.options) > 0
     assert any(arg.name == "NAME" for arg in hello_cmd.arguments)
-    assert any(opt.name == "--caps / --no-caps" for opt in hello_cmd.options)
+    caps_opt = next(
+        opt for opt in hello_cmd.options if opt.name == "--caps / --no-caps"
+    )
+    assert caps_opt.description == "Whether to capitalize the name"
+    assert caps_opt.default == "no-caps"
+    assert "[default:" not in caps_opt.description
 
 
 def test_parse_markdown_with_commands():
@@ -536,6 +559,18 @@ def test_parse_markdown_with_commands_fallback():
 """
     tree = parse_markdown_to_tree(markdown)
     assert tree.commands[0].name == "foo"
+
+
+def test_legacy_pretty_default_only_in_default_column():
+    markdown = """
+# mycli
+
+**Options**:
+* `--caps / --no-caps`: Whether to capitalize the name  [default: no-caps]
+"""
+    table = tree_to_markdown(parse_markdown_to_tree(markdown))
+    assert "Whether to capitalize the name  [default: no-caps]" not in table
+    assert "`no-caps`" in table
 
 
 def test_parse_markdown_nested_command_without_parent():
