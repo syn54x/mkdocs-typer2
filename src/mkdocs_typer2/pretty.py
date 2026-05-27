@@ -76,6 +76,14 @@ def _format_usage(usage_text: str) -> Optional[str]:
 
 
 def _format_option_name(option: click.Option, ctx: click.Context) -> str:
+    if isinstance(option.type, click.Choice):
+        metavar = f"[{'|'.join(str(choice) for choice in option.type.choices)}]"
+        primary = ", ".join(option.opts)
+        if option.secondary_opts:
+            secondary = " / ".join(option.secondary_opts)
+            return f"{primary} / {secondary}"
+        return f"{primary} {metavar}"
+
     help_record = option.get_help_record(ctx)
     if help_record:
         return help_record[0]
