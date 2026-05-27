@@ -12,6 +12,7 @@ class ExportFormat(str, Enum):
     yaml = "yaml"
     markdown = "markdown"
 
+
 app = typer.Typer(help="A sample CLI\n\nThis is a multi-line help message.")
 
 app.add_typer(sub_app, name="subapp")

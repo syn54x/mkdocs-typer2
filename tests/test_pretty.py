@@ -456,7 +456,7 @@ def test_resolve_click_command_variants():
     def hello():
         return None
 
-    assert isinstance(_resolve_click_command(app), click.core.Command)
+    assert _resolve_click_command(app).name == "hello"
     command = click.Command("cmd")
     assert _resolve_click_command(command) is command
     with pytest.raises(ValueError, match="Resolved object is not a Typer or Click"):

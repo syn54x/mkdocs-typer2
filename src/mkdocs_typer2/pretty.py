@@ -51,11 +51,18 @@ def build_tree_from_click_app(module: str, name: str) -> CommandNode:
     return _build_tree_from_click_command(command, display_name=display_name)
 
 
+def _is_click_group(command: object) -> bool:
+    commands = getattr(command, "commands", None)
+    return isinstance(commands, dict)
+
+
 def _resolve_click_command(app: object) -> click.core.Command:
-    if isinstance(app, click.core.Command):
-        return app
     if isinstance(app, typer.Typer):
         return typer.main.get_command(app)
+    if isinstance(app, click.core.Command) or (
+        callable(getattr(app, "get_params", None)) and getattr(app, "name", None)
+    ):
+        return app  # type: ignore[return-value]
     raise ValueError("Resolved object is not a Typer or Click command.")
 
 
@@ -108,7 +115,8 @@ def _build_tree_from_click_command(
     )
 
     for param in command.params:
-        if isinstance(param, click.Argument):
+        param_type = getattr(param, "param_type_name", None)
+        if param_type == "argument":
             arg_name = getattr(param, "human_readable_name", None) or param.name
             node.arguments.append(
                 Argument(
@@ -117,7 +125,7 @@ def _build_tree_from_click_command(
                     required=param.required,
                 )
             )
-        elif isinstance(param, click.Option):
+        elif param_type == "option":
             node.options.append(
                 Option(
                     name=_format_option_name(param, ctx),
@@ -128,7 +136,7 @@ def _build_tree_from_click_command(
                 )
             )
 
-    if isinstance(command, click.core.Group):
+    if _is_click_group(command):
         for subcommand in command.commands.values():
             node.commands.append(
                 CommandEntry(
