@@ -12,6 +12,25 @@ def test_docs_command():
     assert "Generating docs for test-project" in result.stdout
 
 
+def test_export_command():
+    result = runner.invoke(
+        app,
+        [
+            "export",
+            "--detail",
+            "minimal",
+            "--format",
+            "yaml",
+            "--retries",
+            "3",
+            "--config",
+            "custom.yml",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Exporting as yaml (minimal) with 3 retries from custom.yml" in result.stdout
+
+
 @pytest.mark.parametrize(
     "name,caps,color,expected",
     [

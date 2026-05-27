@@ -388,6 +388,12 @@ def test_build_tree_from_click_app():
     assert tree.name == "app"
     assert tree.subcommands
     assert any(cmd.name == "docs" for cmd in tree.commands)
+    export = next(node for node in tree.subcommands if node.name == "export")
+    option_names = {opt.name for opt in export.options}
+    assert "--detail [full|minimal]" in option_names
+    assert "--format [json|yaml|markdown]" in option_names
+    assert "--retries INTEGER" in option_names
+    assert "--config PATH" in option_names
 
 
 def test_build_tree_from_click_app_includes_choice_options():
