@@ -75,14 +75,25 @@ def _format_usage(usage_text: str) -> Optional[str]:
     return first_line.strip()
 
 
+def _format_choice_metavar(option: click.Option) -> Optional[str]:
+    param_types = [option.type, getattr(option.type, "func", None)]
+    for param_type in param_types:
+        if param_type is None:
+            continue
+        choices = getattr(param_type, "choices", None)
+        if choices is not None:
+            return f"[{'|'.join(str(choice) for choice in choices)}]"
+    return None
+
+
 def _format_option_name(option: click.Option, ctx: click.Context) -> str:
-    if isinstance(option.type, click.Choice):
-        metavar = f"[{'|'.join(str(choice) for choice in option.type.choices)}]"
+    choice_metavar = _format_choice_metavar(option)
+    if choice_metavar:
         primary = ", ".join(option.opts)
         if option.secondary_opts:
             secondary = " / ".join(option.secondary_opts)
             return f"{primary} / {secondary}"
-        return f"{primary} {metavar}"
+        return f"{primary} {choice_metavar}"
 
     help_record = option.get_help_record(ctx)
     if help_record:
