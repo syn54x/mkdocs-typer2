@@ -55,11 +55,24 @@ def _ansi_to_html(text: str, scheme: str, dark_bg: bool) -> str:
 
 
 def _termynal_block_html(
-    title: str, prompt: str, input_text: str, output_html: str, buttons: str = "macos"
+    title: str,
+    prompt: str,
+    input_text: str,
+    output_html: str,
+    buttons: str = "macos",
+    style: str = "",
 ) -> str:
-    """Wrap a prompt line and output in termynal's ``data-ty`` markup."""
+    """Wrap a prompt line and output in termynal's ``data-ty`` markup.
+
+    ``style`` is an optional inline style applied to the block; the renderer
+    uses it only to space *stacked* blocks apart, since termynal styles
+    ``[data-termynal]`` with padding but no margin. A lone block gets none, so
+    spacing against surrounding page content stays the theme's concern.
+    """
+    style_attr = f'style="{_html_escape(style)}" ' if style else ""
     return (
         f'<div class="termy" data-termynal data-ty-{buttons} '
+        f"{style_attr}"
         f'data-ty-title="{_html_escape(title)}">'
         f'<span data-ty="input" data-ty-prompt="{_html_escape(prompt)}">'
         f"{_html_escape(input_text)}</span>"
@@ -115,6 +128,7 @@ def _one_block(
     ansi_scheme: str,
     ansi_dark_bg: bool,
     prompt: str,
+    style: str = "",
 ) -> str:
     help_text = _colored_help(command, info_name, width=width).rstrip("\n")
     output_html = _ansi_to_html(help_text, ansi_scheme, ansi_dark_bg)
@@ -123,6 +137,7 @@ def _one_block(
         prompt=prompt,
         input_text=f"{info_name} --help",
         output_html=output_html,
+        style=style,
     )
 
 
@@ -170,6 +185,9 @@ def render_termynal_html(
                     ansi_scheme=ansi_scheme,
                     ansi_dark_bg=ansi_dark_bg,
                     prompt=prompt,
+                    # Space stacked blocks apart without imposing a margin on
+                    # the boundary between the first/last block and page content.
+                    style="margin-top: 1.5rem;",
                 )
             )
 
