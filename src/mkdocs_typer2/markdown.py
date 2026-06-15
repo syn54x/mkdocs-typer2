@@ -21,6 +21,8 @@ class TyperExtension(markdown.Extension):
         engine: str = "legacy",
         termynal: bool = False,
         width: int = 80,
+        scheme: str = "xterm",
+        dark_bg: bool = True,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -28,6 +30,8 @@ class TyperExtension(markdown.Extension):
         self.engine = engine
         self.termynal = termynal
         self.width = width
+        self.scheme = scheme
+        self.dark_bg = dark_bg
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
         md.parser.blockprocessors.register(
@@ -37,6 +41,8 @@ class TyperExtension(markdown.Extension):
                 engine=self.engine,
                 termynal=self.termynal,
                 width=self.width,
+                scheme=self.scheme,
+                dark_bg=self.dark_bg,
             ),
             "typer",
             175,
@@ -51,6 +57,8 @@ class TyperProcessor(BlockProcessor):
         engine: str = "legacy",
         termynal: bool = False,
         width: int = 80,
+        scheme: str = "xterm",
+        dark_bg: bool = True,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -58,6 +66,8 @@ class TyperProcessor(BlockProcessor):
         self.engine = engine
         self.termynal = termynal
         self.width = width
+        self.scheme = scheme
+        self.dark_bg = dark_bg
 
     def test(self, parent, block):
         return block.strip().startswith(":::") and "mkdocs-typer2" in block
@@ -78,6 +88,8 @@ class TyperProcessor(BlockProcessor):
 
         termynal_match = re.search(r":termynal:\s*(\S+)", block)
         width_match = re.search(r":width:\s*(\S+)", block)
+        scheme_match = re.search(r":scheme:\s*(\S+)", block)
+        dark_bg_match = re.search(r":dark_bg:\s*(\S+)", block)
         use_termynal = self.termynal
         if termynal_match:
             value = termynal_match.group(1).lower()
@@ -91,11 +103,25 @@ class TyperProcessor(BlockProcessor):
                 width = int(width_match.group(1))
             except ValueError:
                 pass
+        scheme = scheme_match.group(1) if scheme_match else self.scheme
+        dark_bg = self.dark_bg
+        if dark_bg_match:
+            dark_bg_value = dark_bg_match.group(1).lower()
+            if dark_bg_value in ["true", "1", "yes"]:
+                dark_bg = True
+            elif dark_bg_value in ["false", "0", "no"]:
+                dark_bg = False
 
         if use_termynal:
             from .termynal_render import render_termynal_html
 
-            html = render_termynal_html(module, name, width=width)
+            html = render_termynal_html(
+                module,
+                name,
+                width=width,
+                ansi_scheme=scheme,
+                ansi_dark_bg=dark_bg,
+            )
             placeholder = self.parser.md.htmlStash.store(html)
             div = etree.SubElement(parent, "div")
             div.set("class", "termynal-typer-docs")

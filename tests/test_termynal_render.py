@@ -56,6 +56,38 @@ def test_render_termynal_html_plain_click_monochrome(monkeypatch):
     assert 'style="color:' not in html
 
 
+def test_scheme_changes_colors():
+    from mkdocs_typer2.termynal_render import _ansi_to_html
+
+    red = "\x1b[31mred\x1b[0m"
+    assert "#cd0000" in _ansi_to_html(red, "xterm", True)
+    assert "#c23621" in _ansi_to_html(red, "osx", True)
+
+
+def test_invalid_scheme_falls_back_to_xterm():
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", ansi_scheme="not-a-scheme", recurse=False
+    )
+    assert "data-termynal" in html
+
+
+def test_scheme_option_through_directive():
+    def render(extra=""):
+        directive = (
+            "::: mkdocs-typer2\n"
+            "    :module: mkdocs_typer2.cli.cli\n"
+            "    :name: mkdocs-typer2\n"
+            "    :termynal: true\n"
+            f"{extra}"
+        )
+        return markdown.markdown(
+            directive, extensions=["tables", TyperExtension(engine="native")]
+        )
+
+    # The :scheme: option must thread through and change the rendered palette.
+    assert render() != render("    :scheme: osx\n")
+
+
 def test_termynal_end_to_end_through_markdown_pipeline():
     directive = (
         "::: mkdocs-typer2\n"

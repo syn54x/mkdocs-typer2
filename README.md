@@ -181,6 +181,8 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
 - `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. The root command is rendered first, followed by one block per direct subcommand. Overrides the global `termynal` setting.
 - `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
+- `:scheme:` - Color palette for termynal output. One of `ansi2html`, `dracula`, `mint-terminal`, `osx`, `osx-basic`, `osx-solid-colors`, `solarized`, `xterm`. Invalid values fall back to `xterm` (the default).
+- `:dark_bg:` - Set to `false` to use the scheme's light-background variant. Defaults to `true`.
 
 ### Termynal Output Mode
 
@@ -193,9 +195,9 @@ How it works: the app module is imported and each command's `--help` is rendered
 in-process (forcing rich's terminal output so color is preserved). Hidden
 commands are skipped, matching what `--help` itself shows. The ANSI output is
 converted to inline HTML with [`ansi2html`](https://github.com/pycontribs/ansi2html)
-and wrapped in termynal's `data-ty` markup, which `termynal.js` animates. The
-fork does not import termynal's Python renderer — it emits the markup directly,
-and `tests/test_termynal_contract.py` guards that markup against drift.
+and wrapped in termynal's `data-ty` markup, which `termynal.js` animates. It does
+not import termynal's Python renderer — it emits the markup directly, and
+`tests/test_termynal_contract.py` guards that markup against drift.
 
 Enable it globally via the MkDocs plugin:
 
@@ -204,6 +206,8 @@ plugins:
   - mkdocs-typer2:
       termynal: true
       width: 80
+      scheme: xterm
+      dark_bg: true
 ```
 
 or per block:

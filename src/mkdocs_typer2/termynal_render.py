@@ -12,6 +12,18 @@ import click
 
 from .pretty import _is_click_group, _resolve_click_command
 
+ANSI_SCHEMES = (
+    "ansi2html",
+    "dracula",
+    "mint-terminal",
+    "osx",
+    "osx-basic",
+    "osx-solid-colors",
+    "solarized",
+    "xterm",
+)
+DEFAULT_ANSI_SCHEME = "xterm"
+
 
 def _html_escape(text: str) -> str:
     text = text.replace("&", "&amp;")
@@ -119,7 +131,7 @@ def render_termynal_html(
     name: str,
     *,
     width: int = 80,
-    ansi_scheme: str = "xterm",
+    ansi_scheme: str = DEFAULT_ANSI_SCHEME,
     ansi_dark_bg: bool = True,
     prompt: str = "$",
     recurse: bool = True,
@@ -129,6 +141,9 @@ def render_termynal_html(
     The root command is always rendered; when ``recurse`` is true and the app is
     a group, each non-hidden direct subcommand is rendered as its own block.
     """
+    if ansi_scheme not in ANSI_SCHEMES:
+        ansi_scheme = DEFAULT_ANSI_SCHEME
+
     command = _resolve_app(module, name)
     display = name or command.name or ""
 

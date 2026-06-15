@@ -22,6 +22,14 @@ class MkdocsTyper(BasePlugin):
             "width",
             config_options.Type(int, default=80),
         ),
+        (
+            "scheme",
+            config_options.Type(str, default="xterm"),
+        ),
+        (
+            "dark_bg",
+            config_options.Type(bool, default=True),
+        ),
     )
 
     def on_config(self, config, **kwargs) -> dict:
@@ -31,6 +39,8 @@ class MkdocsTyper(BasePlugin):
                 engine=self.config.get("engine", "legacy"),
                 termynal=self.config.get("termynal", False),
                 width=self.config.get("width", 80),
+                scheme=self.config.get("scheme", "xterm"),
+                dark_bg=self.config.get("dark_bg", True),
             )
         )
         return config
