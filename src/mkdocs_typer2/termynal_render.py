@@ -5,13 +5,20 @@ coupling to termynal's markup contract.
 """
 
 import io
-from typing import List
+from dataclasses import dataclass, replace
+from typing import Dict, List, Literal, Optional, Tuple, get_args
 
 import click
 
 from .pretty import _is_click_group, resolve_click_command
 
-ANSI_SCHEMES = (
+# --- termynal contract --------------------------------------------------------
+# All option domains and the ``data-ty-*`` attribute names we emit live here as
+# the single source of truth. ``tests/test_termynal_contract.py`` guards the
+# attribute names against termynal's own CSS/JS, so they fail loudly if termynal
+# ever renames them.
+
+AnsiScheme = Literal[
     "ansi2html",
     "dracula",
     "mint-terminal",
@@ -20,8 +27,47 @@ ANSI_SCHEMES = (
     "osx-solid-colors",
     "solarized",
     "xterm",
-)
-DEFAULT_ANSI_SCHEME = "xterm"
+]
+ANSI_SCHEMES: Tuple[str, ...] = get_args(AnsiScheme)
+DEFAULT_ANSI_SCHEME: AnsiScheme = "xterm"
+
+ButtonStyle = Literal["macos", "windows"]
+BUTTONS: Tuple[str, ...] = get_args(ButtonStyle)
+DEFAULT_BUTTONS: ButtonStyle = "macos"
+
+DEFAULT_PROMPT = "$"
+
+# termynal.js reads these per-element timing attributes at runtime (its
+# constructor does ``getAttribute('data-ty-typeDelay')`` etc.). We emit them
+# only when explicitly set, otherwise termynal's own defaults apply.
+TIMING_ATTRS: Dict[str, str] = {
+    "type_delay": "data-ty-typeDelay",
+    "line_delay": "data-ty-lineDelay",
+    "start_delay": "data-ty-startDelay",
+}
+
+# termynal styles ``[data-termynal]`` with padding but no margin, so stacked
+# blocks would touch. This spaces them apart without imposing a margin on the
+# boundary between the first/last block and surrounding page content.
+STACKED_BLOCK_STYLE = "margin-top: 1.5rem;"
+
+
+@dataclass
+class TermynalOptions:
+    """Resolved termynal render options (plugin config + per-directive overrides).
+
+    ``scheme`` and ``buttons`` are validated at render time; an out-of-domain
+    value (directive input is free text) falls back to its default.
+    """
+
+    width: int = 80
+    scheme: AnsiScheme = DEFAULT_ANSI_SCHEME
+    dark_bg: bool = True
+    buttons: ButtonStyle = DEFAULT_BUTTONS
+    prompt: str = DEFAULT_PROMPT
+    type_delay: Optional[int] = None
+    line_delay: Optional[int] = None
+    start_delay: Optional[int] = None
 
 
 def _html_escape(text: str) -> str:
@@ -58,20 +104,35 @@ def _termynal_block_html(
     prompt: str,
     input_text: str,
     output_html: str,
-    buttons: str = "macos",
+    *,
+    buttons: ButtonStyle = DEFAULT_BUTTONS,
+    type_delay: Optional[int] = None,
+    line_delay: Optional[int] = None,
+    start_delay: Optional[int] = None,
     style: str = "",
 ) -> str:
     """Wrap a prompt line and output in termynal's ``data-ty`` markup.
 
-    ``style`` is an optional inline style applied to the block; the renderer
-    uses it only to space *stacked* blocks apart, since termynal styles
-    ``[data-termynal]`` with padding but no margin. A lone block gets none, so
-    spacing against surrounding page content stays the theme's concern.
+    ``style`` is an optional inline style; the renderer uses it only to space
+    *stacked* blocks apart (a lone block gets none, so spacing against
+    surrounding page content stays the theme's concern). The timing arguments
+    emit the matching ``data-ty-*`` attributes only when set, deferring to
+    termynal's own defaults otherwise.
     """
-    style_attr = f'style="{_html_escape(style)}" ' if style else ""
+    extra = ""
+    if style:
+        extra += f'style="{_html_escape(style)}" '
+    delays = {
+        "type_delay": type_delay,
+        "line_delay": line_delay,
+        "start_delay": start_delay,
+    }
+    for field, value in delays.items():
+        if value is not None:
+            extra += f'{TIMING_ATTRS[field]}="{int(value)}" '
     return (
         f'<div class="termy" data-termynal data-ty-{buttons} '
-        f"{style_attr}"
+        f"{extra}"
         f'data-ty-title="{_html_escape(title)}">'
         f'<span data-ty="input" data-ty-prompt="{_html_escape(prompt)}">'
         f"{_html_escape(input_text)}</span>"
@@ -112,32 +173,38 @@ def _colored_help(command: click.core.Command, info_name: str, width: int = 80) 
 def _one_block(
     command: click.core.Command,
     info_name: str,
-    *,
-    width: int,
-    ansi_scheme: str,
-    ansi_dark_bg: bool,
-    prompt: str,
+    options: TermynalOptions,
     style: str = "",
 ) -> str:
-    help_text = _colored_help(command, info_name, width=width).rstrip("\n")
-    output_html = _ansi_to_html(help_text, ansi_scheme, ansi_dark_bg)
+    help_text = _colored_help(command, info_name, width=options.width).rstrip("\n")
+    output_html = _ansi_to_html(help_text, options.scheme, options.dark_bg)
     return _termynal_block_html(
         title=info_name,
-        prompt=prompt,
+        prompt=options.prompt,
         input_text=f"{info_name} --help",
         output_html=output_html,
+        buttons=options.buttons,
+        type_delay=options.type_delay,
+        line_delay=options.line_delay,
+        start_delay=options.start_delay,
         style=style,
     )
+
+
+def _normalized(options: TermynalOptions) -> TermynalOptions:
+    """Coerce an out-of-domain ``scheme``/``buttons`` back to its default."""
+    scheme = options.scheme if options.scheme in ANSI_SCHEMES else DEFAULT_ANSI_SCHEME
+    buttons = options.buttons if options.buttons in BUTTONS else DEFAULT_BUTTONS
+    if scheme == options.scheme and buttons == options.buttons:
+        return options
+    return replace(options, scheme=scheme, buttons=buttons)
 
 
 def render_termynal_html(
     module: str,
     name: str,
+    options: Optional[TermynalOptions] = None,
     *,
-    width: int = 80,
-    ansi_scheme: str = DEFAULT_ANSI_SCHEME,
-    ansi_dark_bg: bool = True,
-    prompt: str = "$",
     recurse: bool = True,
 ) -> str:
     """Render ``module``'s app help as one or more termynal HTML blocks.
@@ -145,22 +212,12 @@ def render_termynal_html(
     The root command is always rendered; when ``recurse`` is true and the app is
     a group, each non-hidden direct subcommand is rendered as its own block.
     """
-    if ansi_scheme not in ANSI_SCHEMES:
-        ansi_scheme = DEFAULT_ANSI_SCHEME
+    options = _normalized(options or TermynalOptions())
 
     command = resolve_click_command(module, name)
     display = name or command.name or ""
 
-    blocks: List[str] = [
-        _one_block(
-            command,
-            display,
-            width=width,
-            ansi_scheme=ansi_scheme,
-            ansi_dark_bg=ansi_dark_bg,
-            prompt=prompt,
-        )
-    ]
+    blocks: List[str] = [_one_block(command, display, options)]
 
     if recurse and _is_click_group(command):
         for sub_name, subcommand in command.commands.items():
@@ -170,13 +227,8 @@ def render_termynal_html(
                 _one_block(
                     subcommand,
                     f"{display} {sub_name}".strip(),
-                    width=width,
-                    ansi_scheme=ansi_scheme,
-                    ansi_dark_bg=ansi_dark_bg,
-                    prompt=prompt,
-                    # Space stacked blocks apart without imposing a margin on
-                    # the boundary between the first/last block and page content.
-                    style="margin-top: 1.5rem;",
+                    options,
+                    style=STACKED_BLOCK_STYLE,
                 )
             )
 

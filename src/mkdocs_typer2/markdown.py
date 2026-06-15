@@ -11,6 +11,32 @@ from .pretty import (
     tree_to_markdown,
     tree_to_markdown_list,
 )
+from .termynal_render import TermynalOptions, render_termynal_html
+
+
+def _directive_value(block: str, key: str) -> str | None:
+    match = re.search(rf":{key}:\s*(\S+)", block)
+    return match.group(1) if match else None
+
+
+def _as_bool(value: str | None, default: bool) -> bool:
+    if value is None:
+        return default
+    lowered = value.lower()
+    if lowered in ("true", "1", "yes"):
+        return True
+    if lowered in ("false", "0", "no"):
+        return False
+    return default
+
+
+def _as_int(value: str | None, default: int | None) -> int | None:
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
 
 class TyperExtension(markdown.Extension):
@@ -23,15 +49,29 @@ class TyperExtension(markdown.Extension):
         width: int = 80,
         scheme: str = "xterm",
         dark_bg: bool = True,
+        buttons: str = "macos",
+        prompt: str = "$",
+        type_delay: int | None = None,
+        line_delay: int | None = None,
+        start_delay: int | None = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
         self.termynal = termynal
-        self.width = width
-        self.scheme = scheme
-        self.dark_bg = dark_bg
+        # Termynal render options are bundled so they thread through as one
+        # object instead of a kwarg list duplicated across Extension/Processor.
+        self.termynal_options = TermynalOptions(
+            width=width,
+            scheme=scheme,
+            dark_bg=dark_bg,
+            buttons=buttons,
+            prompt=prompt,
+            type_delay=type_delay,
+            line_delay=line_delay,
+            start_delay=start_delay,
+        )
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
         md.parser.blockprocessors.register(
@@ -40,9 +80,7 @@ class TyperExtension(markdown.Extension):
                 pretty=self.pretty,
                 engine=self.engine,
                 termynal=self.termynal,
-                width=self.width,
-                scheme=self.scheme,
-                dark_bg=self.dark_bg,
+                options=self.termynal_options,
             ),
             "typer",
             175,
@@ -56,21 +94,33 @@ class TyperProcessor(BlockProcessor):
         pretty: bool | None = None,
         engine: str = "legacy",
         termynal: bool = False,
-        width: int = 80,
-        scheme: str = "xterm",
-        dark_bg: bool = True,
+        options: TermynalOptions | None = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
         self.termynal = termynal
-        self.width = width
-        self.scheme = scheme
-        self.dark_bg = dark_bg
+        self.options = options or TermynalOptions()
 
     def test(self, parent, block):
         return block.strip().startswith(":::") and "mkdocs-typer2" in block
+
+    def _resolve_termynal_options(self, block: str) -> TermynalOptions:
+        """Build per-block options from the globals plus directive overrides."""
+        base = self.options
+        return TermynalOptions(
+            width=_as_int(_directive_value(block, "width"), base.width),
+            scheme=_directive_value(block, "scheme") or base.scheme,
+            dark_bg=_as_bool(_directive_value(block, "dark_bg"), base.dark_bg),
+            buttons=_directive_value(block, "buttons") or base.buttons,
+            prompt=_directive_value(block, "prompt") or base.prompt,
+            type_delay=_as_int(_directive_value(block, "type_delay"), base.type_delay),
+            line_delay=_as_int(_directive_value(block, "line_delay"), base.line_delay),
+            start_delay=_as_int(
+                _directive_value(block, "start_delay"), base.start_delay
+            ),
+        )
 
     def run(self, parent, blocks):
         block = blocks.pop(0)
@@ -86,41 +136,10 @@ class TyperProcessor(BlockProcessor):
         module = module_match.group(1)
         name = name_match.group(1) if name_match else ""
 
-        termynal_match = re.search(r":termynal:\s*(\S+)", block)
-        width_match = re.search(r":width:\s*(\S+)", block)
-        scheme_match = re.search(r":scheme:\s*(\S+)", block)
-        dark_bg_match = re.search(r":dark_bg:\s*(\S+)", block)
-        use_termynal = self.termynal
-        if termynal_match:
-            value = termynal_match.group(1).lower()
-            if value in ["true", "1", "yes"]:
-                use_termynal = True
-            elif value in ["false", "0", "no"]:
-                use_termynal = False
-        width = self.width
-        if width_match:
-            try:
-                width = int(width_match.group(1))
-            except ValueError:
-                pass
-        scheme = scheme_match.group(1) if scheme_match else self.scheme
-        dark_bg = self.dark_bg
-        if dark_bg_match:
-            dark_bg_value = dark_bg_match.group(1).lower()
-            if dark_bg_value in ["true", "1", "yes"]:
-                dark_bg = True
-            elif dark_bg_value in ["false", "0", "no"]:
-                dark_bg = False
-
+        use_termynal = _as_bool(_directive_value(block, "termynal"), self.termynal)
         if use_termynal:
-            from .termynal_render import render_termynal_html
-
             html = render_termynal_html(
-                module,
-                name,
-                width=width,
-                ansi_scheme=scheme,
-                ansi_dark_bg=dark_bg,
+                module, name, self._resolve_termynal_options(block)
             )
             placeholder = self.parser.md.htmlStash.store(html)
             div = etree.SubElement(parent, "div")
