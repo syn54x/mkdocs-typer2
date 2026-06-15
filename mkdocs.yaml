@@ -34,6 +34,7 @@ nav:
   - CLI (Legacy): cli.md
   - CLI (Pretty Legacy): cli-pretty-legacy.md
   - CLI (Pretty Native): cli-pretty-native.md
+  - CLI (Termynal): cli-termynal.md
   - CHANGELOG: changelog.md
 
 markdown_extensions:
@@ -54,6 +55,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - termynal
   - mkdocstrings:
       handlers:
         python:
