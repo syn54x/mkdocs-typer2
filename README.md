@@ -180,7 +180,8 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:pretty:` - Set to `true` to enable pretty formatting for this specific documentation block, overriding the global setting.
 - `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
 - `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. By default only the root command's `--help` is rendered (see `:subcommands:` to include nested commands). Overrides the global `termynal` setting.
-- `:subcommands:` - Recursion depth for termynal output. `0` (default) renders only the root command's `--help`; `1` adds a block per direct subcommand, `2` adds their subcommands, and so on; `-1` renders every level. Hidden commands are skipped at every level.
+- `:command:` - Render a specific subcommand instead of the root. A space-separated path selects nested commands (e.g. `:command: export` renders `<cli> export --help`; `:command: subapp sub-command` goes one level deeper). `:subcommands:` recursion then applies relative to the selected command. Block-level only.
+- `:subcommands:` - Recursion depth for termynal output. `0` (default) renders only the selected command's `--help`; `1` adds a block per direct subcommand, `2` adds their subcommands, and so on; `-1` renders every level. Hidden commands are skipped at every level.
 - `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
 - `:scheme:` - Color palette for termynal output. One of `ansi2html`, `dracula`, `mint-terminal`, `osx`, `osx-basic`, `osx-solid-colors`, `solarized`, `xterm`. Invalid values fall back to `xterm` (the default).
 - `:dark_bg:` - Set to `false` to use the scheme's light-background variant. Defaults to `true`.
@@ -222,7 +223,8 @@ plugins:
 ```
 
 Every block-level option above has a global `termynal_`-prefixed equivalent
-(e.g. `:buttons:` ↔ `termynal_buttons`); the block-level value wins.
+(e.g. `:buttons:` ↔ `termynal_buttons`); the block-level value wins. The
+`:command:` selector is block-level only.
 
 or per block:
 
@@ -232,6 +234,19 @@ or per block:
     :name: mycli
     :termynal: true
     :width: 100
+```
+
+To document one subcommand per block — with your own headings and prose around
+each — select it with `:command:`:
+
+```markdown
+## Export
+
+::: mkdocs-typer2
+    :module: my_module.cli
+    :name: mycli
+    :termynal: true
+    :command: export
 ```
 
 **Requirements / caveats:**

@@ -67,6 +67,62 @@ def test_render_termynal_html_unlimited_depth_with_negative():
     assert full.count("data-termynal") >= one_level.count("data-termynal") >= 2
 
 
+def test_command_selects_a_single_subcommand():
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", command="docs"
+    )
+
+    # Exactly the selected command's --help, nothing else.
+    assert html.count("data-termynal") == 1
+    assert "mkdocs-typer2 docs --help" in html
+    assert "mkdocs-typer2 export --help" not in html
+
+
+def test_command_selects_nested_path():
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", command="subapp sub-command"
+    )
+
+    assert html.count("data-termynal") == 1
+    assert "mkdocs-typer2 subapp sub-command --help" in html
+
+
+def test_command_subcommands_recurse_relative_to_selection():
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli",
+        "mkdocs-typer2",
+        TermynalOptions(subcommands=1),
+        command="subapp",
+    )
+
+    # The selected group plus its own direct subcommands.
+    assert "mkdocs-typer2 subapp --help" in html
+    assert "mkdocs-typer2 subapp sub-command --help" in html
+    assert "mkdocs-typer2 subapp sub-command-2 --help" in html
+
+
+def test_command_unknown_path_raises():
+    with pytest.raises(ValueError, match="no subcommand"):
+        render_termynal_html(
+            "mkdocs_typer2.cli.cli", "mkdocs-typer2", command="nope"
+        )
+
+
+def test_command_threads_through_directive():
+    directive = (
+        "::: mkdocs-typer2\n"
+        "    :module: mkdocs_typer2.cli.cli\n"
+        "    :name: mkdocs-typer2\n"
+        "    :termynal: true\n"
+        "    :command: subapp sub-command\n"
+    )
+    html = markdown.markdown(
+        directive, extensions=["tables", TyperExtension(engine="native")]
+    )
+    assert "mkdocs-typer2 subapp sub-command --help" in html
+    assert html.count("data-termynal") == 1
+
+
 def test_render_termynal_html_plain_click_monochrome(monkeypatch):
     """A plain ``click.command`` app renders without raising (monochrome)."""
     module = types.ModuleType("_plain_click_app")

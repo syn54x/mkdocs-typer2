@@ -247,24 +247,53 @@ def _subcommand_blocks(
     return blocks
 
 
+def _select_command(root: click.core.Command, path: str) -> click.core.Command:
+    """Walk ``path`` (space-separated subcommand names) down from ``root``.
+
+    ``"plot"`` selects the ``plot`` subcommand; ``"plot sub"`` selects ``sub``
+    under it. Explicit selection renders the command even if it is hidden.
+    """
+    command = root
+    for part in path.split():
+        commands = getattr(command, "commands", None)
+        if not isinstance(commands, dict) or part not in commands:
+            raise ValueError(
+                f"Unknown termynal :command: path {path!r}: "
+                f"{command.name or 'the root command'!r} has no subcommand "
+                f"{part!r}."
+            )
+        command = commands[part]
+    return command
+
+
 def render_termynal_html(
     module: str,
     name: str,
     options: Optional[TermynalOptions] = None,
+    *,
+    command: str = "",
 ) -> str:
     """Render ``module``'s app help as one or more termynal HTML blocks.
 
-    The root command's ``--help`` is always rendered as a single block. Each
-    extra level of ``options.subcommands`` adds a stacked block per non-hidden
-    subcommand at that depth; at the default of 0 only the root block is emitted
-    (matching a bare ``<cmd> --help``).
+    By default the resolved app's ``--help`` is rendered as a single block. When
+    ``command`` is given (a space-separated subcommand path, e.g. ``"plot"`` or
+    ``"plot sub"``), that subcommand is selected as the block's command instead,
+    and ``options.subcommands`` recursion applies relative to it. Each extra
+    level of ``options.subcommands`` adds a stacked block per non-hidden
+    subcommand at that depth; at the default of 0 only the selected block is
+    emitted (matching a bare ``<cmd> --help``).
     """
     options = _normalized(options or TermynalOptions())
 
-    command = resolve_click_command(module, name)
-    display = name or command.name or ""
+    root = resolve_click_command(module, name)
+    display = name or root.name or ""
 
-    blocks: List[str] = [_one_block(command, display, options)]
-    blocks.extend(_subcommand_blocks(command, display, options, options.subcommands))
+    selected = root
+    if command:
+        selected = _select_command(root, command)
+        display = f"{display} {command}".strip()
+
+    blocks: List[str] = [_one_block(selected, display, options)]
+    blocks.extend(_subcommand_blocks(selected, display, options, options.subcommands))
 
     return "\n".join(blocks)

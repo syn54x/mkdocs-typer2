@@ -19,6 +19,16 @@ def _directive_value(block: str, key: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _directive_line(block: str, key: str) -> str | None:
+    """Like ``_directive_value`` but captures the rest of the line.
+
+    Used for values that may contain spaces, such as a ``:command:`` path
+    (``plot sub``).
+    """
+    match = re.search(rf":{key}:\s*(.+)", block)
+    return match.group(1).strip() if match else None
+
+
 def _as_bool(value: str | None, default: bool) -> bool:
     if value is None:
         return default
@@ -144,7 +154,10 @@ class TyperProcessor(BlockProcessor):
         use_termynal = _as_bool(_directive_value(block, "termynal"), self.termynal)
         if use_termynal:
             html = render_termynal_html(
-                module, name, self._resolve_termynal_options(block)
+                module,
+                name,
+                self._resolve_termynal_options(block),
+                command=_directive_line(block, "command") or "",
             )
             placeholder = self.parser.md.htmlStash.store(html)
             div = etree.SubElement(parent, "div")
