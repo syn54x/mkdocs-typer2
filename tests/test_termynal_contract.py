@@ -20,10 +20,10 @@ CONTRACT_TOKENS = [
 
 
 def _termynal_reference_markup() -> str:
-    from termynal.markdown import Termynal, parse_config_from_dict
+    from termynal.markdown import Termynal, escape, parse_config_from_dict
 
     termynal = Termynal(parse_config_from_dict({"title": "demo"}))
-    return termynal.convert(termynal.escape("$ demo --help\nhello"))
+    return termynal.convert(escape("$ demo --help\nhello"))
 
 
 @pytest.mark.parametrize("token", CONTRACT_TOKENS)
