@@ -36,19 +36,24 @@ class CommandNode(BaseModel):
     commands: List[CommandEntry] = Field(default_factory=list)
 
 
-def build_tree_from_click_app(module: str, name: str) -> CommandNode:
+def resolve_click_command(module: str, name: str) -> click.core.Command:
+    """Import ``module`` and resolve its Typer/Click app to a Click command.
+
+    Uses the attribute named ``name`` when given, otherwise falls back to a
+    module-level ``app``. Shared by the native engine and termynal output mode.
+    """
     module_ref = importlib.import_module(module)
-    app = None
-    display_name = None
-    if name:
-        display_name = name
-        app = getattr(module_ref, name, None)
+    app = getattr(module_ref, name, None) if name else None
     if app is None:
         app = getattr(module_ref, "app", None)
     if app is None:
         raise ValueError(f"Unable to resolve Typer app from module '{module}'.")
-    command = _resolve_click_command(app)
-    return _build_tree_from_click_command(command, display_name=display_name)
+    return _resolve_click_command(app)
+
+
+def build_tree_from_click_app(module: str, name: str) -> CommandNode:
+    command = resolve_click_command(module, name)
+    return _build_tree_from_click_command(command, display_name=name or None)
 
 
 def _is_click_group(command: object) -> bool:

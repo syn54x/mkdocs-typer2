@@ -4,13 +4,12 @@ See the "Termynal Output Mode" section of the README for how this works and the
 coupling to termynal's markup contract.
 """
 
-import importlib
 import io
 from typing import List
 
 import click
 
-from .pretty import _is_click_group, _resolve_click_command
+from .pretty import _is_click_group, resolve_click_command
 
 ANSI_SCHEMES = (
     "ansi2html",
@@ -110,16 +109,6 @@ def _colored_help(command: click.core.Command, info_name: str, width: int = 80) 
     return formatter.getvalue() if formatter is not None else ""
 
 
-def _resolve_app(module: str, name: str) -> click.core.Command:
-    module_ref = importlib.import_module(module)
-    app = getattr(module_ref, name, None) if name else None
-    if app is None:
-        app = getattr(module_ref, "app", None)
-    if app is None:
-        raise ValueError(f"Unable to resolve Typer/Click app from module '{module}'.")
-    return _resolve_click_command(app)
-
-
 def _one_block(
     command: click.core.Command,
     info_name: str,
@@ -159,7 +148,7 @@ def render_termynal_html(
     if ansi_scheme not in ANSI_SCHEMES:
         ansi_scheme = DEFAULT_ANSI_SCHEME
 
-    command = _resolve_app(module, name)
+    command = resolve_click_command(module, name)
     display = name or command.name or ""
 
     blocks: List[str] = [
