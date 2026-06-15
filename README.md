@@ -179,7 +179,8 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:name:` - The name of the CLI. If left blank, your CLI will simply be named `CLI` in your documentation.
 - `:pretty:` - Set to `true` to enable pretty formatting for this specific documentation block, overriding the global setting.
 - `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
-- `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. The root command is rendered first, followed by one block per direct subcommand. Overrides the global `termynal` setting.
+- `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. By default only the root command's `--help` is rendered (see `:subcommands:` to include nested commands). Overrides the global `termynal` setting.
+- `:subcommands:` - Recursion depth for termynal output. `0` (default) renders only the root command's `--help`; `1` adds a block per direct subcommand, `2` adds their subcommands, and so on; `-1` renders every level. Hidden commands are skipped at every level.
 - `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
 - `:scheme:` - Color palette for termynal output. One of `ansi2html`, `dracula`, `mint-terminal`, `osx`, `osx-basic`, `osx-solid-colors`, `solarized`, `xterm`. Invalid values fall back to `xterm` (the default).
 - `:dark_bg:` - Set to `false` to use the scheme's light-background variant. Defaults to `true`.
@@ -192,7 +193,9 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 Termynal mode introspects the Typer/Click app in-process and emits a faithful,
 colored terminal of what `<cmd> --help` prints. Typer apps (which render help
 through rich) come out colored; plain Click apps render their monochrome help.
-Nothing is executed as a subprocess.
+Nothing is executed as a subprocess. By default only the root command is shown;
+set `:subcommands:` (or `termynal_subcommands`) to a depth to stack its
+subcommands' `--help` below it (`-1` for the full tree).
 
 How it works: the app module is imported and each command's `--help` is rendered
 in-process (forcing rich's terminal output so color is preserved). Hidden
@@ -208,6 +211,7 @@ Enable it globally via the MkDocs plugin:
 plugins:
   - mkdocs-typer2:
       termynal: true
+      termynal_subcommands: 0
       termynal_width: 80
       termynal_scheme: xterm
       termynal_dark_bg: true

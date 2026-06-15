@@ -46,14 +46,15 @@ class TyperExtension(markdown.Extension):
         pretty: bool | None = None,
         engine: str = "legacy",
         termynal: bool = False,
-        width: int = 80,
-        scheme: str = "xterm",
-        dark_bg: bool = True,
-        buttons: str = "macos",
-        prompt: str = "$",
-        type_delay: int | None = None,
-        line_delay: int | None = None,
-        start_delay: int | None = None,
+        width: int = TermynalOptions.width,
+        scheme: str = TermynalOptions.scheme,
+        dark_bg: bool = TermynalOptions.dark_bg,
+        buttons: str = TermynalOptions.buttons,
+        prompt: str = TermynalOptions.prompt,
+        type_delay: int | None = TermynalOptions.type_delay,
+        line_delay: int | None = TermynalOptions.line_delay,
+        start_delay: int | None = TermynalOptions.start_delay,
+        subcommands: int = TermynalOptions.subcommands,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -71,6 +72,7 @@ class TyperExtension(markdown.Extension):
             type_delay=type_delay,
             line_delay=line_delay,
             start_delay=start_delay,
+            subcommands=subcommands,
         )
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
@@ -119,6 +121,9 @@ class TyperProcessor(BlockProcessor):
             line_delay=_as_int(_directive_value(block, "line_delay"), base.line_delay),
             start_delay=_as_int(
                 _directive_value(block, "start_delay"), base.start_delay
+            ),
+            subcommands=_as_int(
+                _directive_value(block, "subcommands"), base.subcommands
             ),
         )
 

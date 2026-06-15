@@ -2,6 +2,7 @@ from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
 
 from .markdown import makeExtension
+from .termynal_render import TermynalOptions
 
 
 class MkdocsTyper(BasePlugin):
@@ -20,23 +21,23 @@ class MkdocsTyper(BasePlugin):
         ),
         (
             "termynal_width",
-            config_options.Type(int, default=80),
+            config_options.Type(int, default=TermynalOptions.width),
         ),
         (
             "termynal_scheme",
-            config_options.Type(str, default="xterm"),
+            config_options.Type(str, default=TermynalOptions.scheme),
         ),
         (
             "termynal_dark_bg",
-            config_options.Type(bool, default=True),
+            config_options.Type(bool, default=TermynalOptions.dark_bg),
         ),
         (
             "termynal_buttons",
-            config_options.Type(str, default="macos"),
+            config_options.Type(str, default=TermynalOptions.buttons),
         ),
         (
             "termynal_prompt",
-            config_options.Type(str, default="$"),
+            config_options.Type(str, default=TermynalOptions.prompt),
         ),
         (
             "termynal_type_delay",
@@ -50,22 +51,27 @@ class MkdocsTyper(BasePlugin):
             "termynal_start_delay",
             config_options.Optional(config_options.Type(int)),
         ),
+        (
+            "termynal_subcommands",
+            config_options.Type(int, default=TermynalOptions.subcommands),
+        ),
     )
 
     def on_config(self, config, **kwargs) -> dict:
         config["markdown_extensions"].append(
             makeExtension(
-                pretty=self.config.get("pretty", False),
-                engine=self.config.get("engine", "legacy"),
-                termynal=self.config.get("termynal", False),
-                width=self.config.get("termynal_width", 80),
-                scheme=self.config.get("termynal_scheme", "xterm"),
-                dark_bg=self.config.get("termynal_dark_bg", True),
-                buttons=self.config.get("termynal_buttons", "macos"),
-                prompt=self.config.get("termynal_prompt", "$"),
-                type_delay=self.config.get("termynal_type_delay"),
-                line_delay=self.config.get("termynal_line_delay"),
-                start_delay=self.config.get("termynal_start_delay"),
+                pretty=self.config["pretty"],
+                engine=self.config["engine"],
+                termynal=self.config["termynal"],
+                width=self.config["termynal_width"],
+                scheme=self.config["termynal_scheme"],
+                dark_bg=self.config["termynal_dark_bg"],
+                buttons=self.config["termynal_buttons"],
+                prompt=self.config["termynal_prompt"],
+                type_delay=self.config["termynal_type_delay"],
+                line_delay=self.config["termynal_line_delay"],
+                start_delay=self.config["termynal_start_delay"],
+                subcommands=self.config["termynal_subcommands"],
             )
         )
         return config

@@ -58,6 +58,10 @@ class TermynalOptions:
 
     ``scheme`` and ``buttons`` are validated at render time; an out-of-domain
     value (directive input is free text) falls back to its default.
+
+    ``subcommands`` is a recursion depth: 0 renders only the root command's
+    ``--help`` (the default), 1 adds its direct subcommands, 2 adds their
+    subcommands, and so on; -1 renders every level (the full tree).
     """
 
     width: int = 80
@@ -68,6 +72,7 @@ class TermynalOptions:
     type_delay: Optional[int] = None
     line_delay: Optional[int] = None
     start_delay: Optional[int] = None
+    subcommands: int = 0
 
 
 def _html_escape(text: str) -> str:
@@ -192,25 +197,67 @@ def _one_block(
 
 
 def _normalized(options: TermynalOptions) -> TermynalOptions:
-    """Coerce an out-of-domain ``scheme``/``buttons`` back to its default."""
+    """Coerce out-of-domain ``scheme``/``buttons``/``width``/``subcommands``.
+
+    ``scheme``/``buttons`` are free-text directive input, so an unknown value
+    falls back to its default; ``width`` is floored at 1 since a non-positive
+    value would make ``rich.Console`` raise or render nothing; ``subcommands``
+    (a recursion depth) keeps any negative value as the -1 "all levels" sentinel.
+    """
     scheme = options.scheme if options.scheme in ANSI_SCHEMES else DEFAULT_ANSI_SCHEME
     buttons = options.buttons if options.buttons in BUTTONS else DEFAULT_BUTTONS
-    if scheme == options.scheme and buttons == options.buttons:
+    width = max(1, options.width)
+    subcommands = options.subcommands if options.subcommands >= 0 else -1
+    if (
+        scheme == options.scheme
+        and buttons == options.buttons
+        and width == options.width
+        and subcommands == options.subcommands
+    ):
         return options
-    return replace(options, scheme=scheme, buttons=buttons)
+    return replace(
+        options, scheme=scheme, buttons=buttons, width=width, subcommands=subcommands
+    )
+
+
+def _subcommand_blocks(
+    command: click.core.Command,
+    display: str,
+    options: TermynalOptions,
+    depth: int,
+) -> List[str]:
+    """Render up to ``depth`` levels of non-hidden subcommands, depth-first.
+
+    Each subcommand is emitted as its own stacked block before its own children,
+    so the output reads parent-then-descendants. Hidden commands are skipped at
+    every level, matching ``--help``. A negative ``depth`` recurses without limit
+    (it never decrements to 0, so it stops only at leaf commands).
+    """
+    if depth == 0 or not _is_click_group(command):
+        return []
+    blocks: List[str] = []
+    for sub_name, subcommand in command.commands.items():
+        if getattr(subcommand, "hidden", False):
+            continue
+        sub_display = f"{display} {sub_name}".strip()
+        blocks.append(
+            _one_block(subcommand, sub_display, options, style=STACKED_BLOCK_STYLE)
+        )
+        blocks.extend(_subcommand_blocks(subcommand, sub_display, options, depth - 1))
+    return blocks
 
 
 def render_termynal_html(
     module: str,
     name: str,
     options: Optional[TermynalOptions] = None,
-    *,
-    recurse: bool = True,
 ) -> str:
     """Render ``module``'s app help as one or more termynal HTML blocks.
 
-    The root command is always rendered; when ``recurse`` is true and the app is
-    a group, each non-hidden direct subcommand is rendered as its own block.
+    The root command's ``--help`` is always rendered as a single block. Each
+    extra level of ``options.subcommands`` adds a stacked block per non-hidden
+    subcommand at that depth; at the default of 0 only the root block is emitted
+    (matching a bare ``<cmd> --help``).
     """
     options = _normalized(options or TermynalOptions())
 
@@ -218,18 +265,6 @@ def render_termynal_html(
     display = name or command.name or ""
 
     blocks: List[str] = [_one_block(command, display, options)]
-
-    if recurse and _is_click_group(command):
-        for sub_name, subcommand in command.commands.items():
-            if getattr(subcommand, "hidden", False):
-                continue
-            blocks.append(
-                _one_block(
-                    subcommand,
-                    f"{display} {sub_name}".strip(),
-                    options,
-                    style=STACKED_BLOCK_STYLE,
-                )
-            )
+    blocks.extend(_subcommand_blocks(command, display, options, options.subcommands))
 
     return "\n".join(blocks)

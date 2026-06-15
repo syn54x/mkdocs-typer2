@@ -22,7 +22,11 @@ from mkdocs_typer2.termynal_render import (  # noqa: E402
 
 
 def test_render_termynal_html_typer_colored_and_balanced():
-    html = render_termynal_html("mkdocs_typer2.cli.cli", "mkdocs-typer2")
+    # Depth 1 so a subcommand block (which carries colored type annotations) is
+    # included; the root --help of this CLI is styled bold-only.
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(subcommands=1)
+    )
 
     # It is a termynal block.
     assert "data-termynal" in html
@@ -32,13 +36,35 @@ def test_render_termynal_html_typer_colored_and_balanced():
     assert html.count("<span") == html.count("</span>")
 
 
-def test_render_termynal_html_recurses_into_subcommands():
+def test_render_termynal_html_root_only_by_default():
     html = render_termynal_html("mkdocs_typer2.cli.cli", "mkdocs-typer2")
+
+    # Default depth is 0: only the root command's --help, no subcommand blocks.
+    assert html.count("data-termynal") == 1
+    assert "mkdocs-typer2 docs --help" not in html
+
+
+def test_render_termynal_html_recurses_into_subcommands():
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(subcommands=1)
+    )
 
     # The root block plus one block per direct subcommand.
     assert html.count("data-termynal") >= 2
     # A known subcommand prompt line is present (recursion happened).
     assert "mkdocs-typer2 docs --help" in html
+
+
+def test_render_termynal_html_unlimited_depth_with_negative():
+    full = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(subcommands=-1)
+    )
+    one_level = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(subcommands=1)
+    )
+
+    # -1 means "all levels", so it renders at least as many blocks as one level.
+    assert full.count("data-termynal") >= one_level.count("data-termynal") >= 2
 
 
 def test_render_termynal_html_plain_click_monochrome(monkeypatch):
@@ -52,7 +78,7 @@ def test_render_termynal_html_plain_click_monochrome(monkeypatch):
     module.cli = cli
     monkeypatch.setitem(sys.modules, "_plain_click_app", module)
 
-    html = render_termynal_html("_plain_click_app", "cli", recurse=False)
+    html = render_termynal_html("_plain_click_app", "cli")
 
     assert "data-termynal" in html
     # Plain Click help is not colored.
@@ -72,20 +98,28 @@ def test_invalid_scheme_falls_back_to_xterm():
         "mkdocs_typer2.cli.cli",
         "mkdocs-typer2",
         TermynalOptions(scheme="not-a-scheme"),
-        recurse=False,
+    )
+    assert "data-termynal" in html
+
+
+def test_non_positive_width_falls_back_to_safe_value():
+    """A zero/negative width must not reach rich.Console (it would raise)."""
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli",
+        "mkdocs-typer2",
+        TermynalOptions(width=0),
     )
     assert "data-termynal" in html
 
 
 def test_buttons_option_selects_window_chrome():
     macos = render_termynal_html(
-        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(), recurse=False
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions()
     )
     windows = render_termynal_html(
         "mkdocs_typer2.cli.cli",
         "mkdocs-typer2",
         TermynalOptions(buttons="windows"),
-        recurse=False,
     )
     assert "data-ty-macos" in macos and "data-ty-windows" not in macos
     assert "data-ty-windows" in windows and "data-ty-macos" not in windows
@@ -96,7 +130,6 @@ def test_invalid_buttons_falls_back_to_macos():
         "mkdocs_typer2.cli.cli",
         "mkdocs-typer2",
         TermynalOptions(buttons="bogus"),
-        recurse=False,
     )
     assert "data-ty-macos" in html
     assert "data-ty-bogus" not in html
@@ -107,7 +140,6 @@ def test_prompt_option_changes_prompt_attribute():
         "mkdocs_typer2.cli.cli",
         "mkdocs-typer2",
         TermynalOptions(prompt=">>>"),
-        recurse=False,
     )
     assert 'data-ty-prompt="&gt;&gt;&gt;"' in html
     assert 'data-ty-prompt="$"' not in html
@@ -115,7 +147,7 @@ def test_prompt_option_changes_prompt_attribute():
 
 def test_timing_attributes_emitted_only_when_set():
     default = render_termynal_html(
-        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(), recurse=False
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions()
     )
     # No timing attributes unless explicitly configured (termynal defaults apply).
     assert "data-ty-typeDelay" not in default
@@ -124,7 +156,6 @@ def test_timing_attributes_emitted_only_when_set():
         "mkdocs_typer2.cli.cli",
         "mkdocs-typer2",
         TermynalOptions(type_delay=10, line_delay=20, start_delay=30),
-        recurse=False,
     )
     assert 'data-ty-typeDelay="10"' in tuned
     assert 'data-ty-lineDelay="20"' in tuned
@@ -145,6 +176,24 @@ def test_buttons_and_delay_thread_through_directive():
     )
     assert "data-ty-windows" in html
     assert 'data-ty-typeDelay="5"' in html
+
+
+def test_subcommands_depth_threads_through_directive():
+    def render(extra=""):
+        directive = (
+            "::: mkdocs-typer2\n"
+            "    :module: mkdocs_typer2.cli.cli\n"
+            "    :name: mkdocs-typer2\n"
+            "    :termynal: true\n"
+            f"{extra}"
+        )
+        return markdown.markdown(
+            directive, extensions=["tables", TyperExtension(engine="native")]
+        )
+
+    # Default (no :subcommands:) is root-only; :subcommands: 1 adds blocks.
+    assert render().count("data-termynal") == 1
+    assert render("    :subcommands: 1\n").count("data-termynal") >= 2
 
 
 def test_scheme_option_through_directive():
@@ -170,6 +219,7 @@ def test_termynal_end_to_end_through_markdown_pipeline():
         "    :module: mkdocs_typer2.cli.cli\n"
         "    :name: mkdocs-typer2\n"
         "    :termynal: true\n"
+        "    :subcommands: 1\n"
     )
 
     html = markdown.markdown(
