@@ -19,15 +19,15 @@ class MkdocsTyper(BasePlugin):
             config_options.Type(bool, default=False),
         ),
         (
-            "width",
+            "termynal_width",
             config_options.Type(int, default=80),
         ),
         (
-            "scheme",
+            "termynal_scheme",
             config_options.Type(str, default="xterm"),
         ),
         (
-            "dark_bg",
+            "termynal_dark_bg",
             config_options.Type(bool, default=True),
         ),
     )
@@ -38,9 +38,9 @@ class MkdocsTyper(BasePlugin):
                 pretty=self.config.get("pretty", False),
                 engine=self.config.get("engine", "legacy"),
                 termynal=self.config.get("termynal", False),
-                width=self.config.get("width", 80),
-                scheme=self.config.get("scheme", "xterm"),
-                dark_bg=self.config.get("dark_bg", True),
+                width=self.config.get("termynal_width", 80),
+                scheme=self.config.get("termynal_scheme", "xterm"),
+                dark_bg=self.config.get("termynal_dark_bg", True),
             )
         )
         return config

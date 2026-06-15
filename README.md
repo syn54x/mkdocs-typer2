@@ -205,9 +205,9 @@ Enable it globally via the MkDocs plugin:
 plugins:
   - mkdocs-typer2:
       termynal: true
-      width: 80
-      scheme: xterm
-      dark_bg: true
+      termynal_width: 80
+      termynal_scheme: xterm
+      termynal_dark_bg: true
 ```
 
 or per block:
