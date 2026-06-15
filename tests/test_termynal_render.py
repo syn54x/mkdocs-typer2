@@ -101,6 +101,57 @@ def test_command_subcommands_recurse_relative_to_selection():
     assert "mkdocs-typer2 subapp sub-command-2 --help" in html
 
 
+def _register_nested_typer_app(monkeypatch):
+    """A three-level Typer app (root -> middle -> inner -> leaf-cmd)."""
+    import typer
+
+    module = types.ModuleType("_nested_typer_app")
+    inner = typer.Typer()
+
+    @inner.command()
+    def leaf_cmd():
+        """A leaf command."""
+
+    middle = typer.Typer()
+    middle.add_typer(inner, name="inner")
+
+    @middle.command()
+    def middle_cmd():
+        """A middle command."""
+
+    app = typer.Typer()
+    app.add_typer(middle, name="middle")
+    module.app = app
+    monkeypatch.setitem(sys.modules, "_nested_typer_app", module)
+
+
+def test_command_selects_sub_subcommand(monkeypatch):
+    _register_nested_typer_app(monkeypatch)
+    html = render_termynal_html(
+        "_nested_typer_app", "app", command="middle inner leaf-cmd"
+    )
+
+    assert html.count("data-termynal") == 1
+    assert "app middle inner leaf-cmd --help" in html
+
+
+def test_subcommands_recursion_reaches_sub_subcommands(monkeypatch):
+    _register_nested_typer_app(monkeypatch)
+
+    # Unlimited depth walks the whole tree, including the third level.
+    full = render_termynal_html(
+        "_nested_typer_app", "app", TermynalOptions(subcommands=-1)
+    )
+    assert "app middle inner leaf-cmd --help" in full
+
+    # Depth 1 stops one level down, before the sub-subcommand.
+    one_level = render_termynal_html(
+        "_nested_typer_app", "app", TermynalOptions(subcommands=1)
+    )
+    assert "app middle --help" in one_level
+    assert "app middle inner leaf-cmd --help" not in one_level
+
+
 def test_command_unknown_path_raises():
     with pytest.raises(ValueError, match="no subcommand"):
         render_termynal_html(
