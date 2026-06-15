@@ -183,6 +183,9 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
 - `:scheme:` - Color palette for termynal output. One of `ansi2html`, `dracula`, `mint-terminal`, `osx`, `osx-basic`, `osx-solid-colors`, `solarized`, `xterm`. Invalid values fall back to `xterm` (the default).
 - `:dark_bg:` - Set to `false` to use the scheme's light-background variant. Defaults to `true`.
+- `:buttons:` - Window chrome style for termynal output. One of `macos` (default) or `windows`. Invalid values fall back to `macos`.
+- `:prompt:` - Prompt symbol shown before the `--help` command. Defaults to `$`.
+- `:type_delay:` / `:line_delay:` / `:start_delay:` - Termynal animation timings in milliseconds (per character, per line, before start). Left unset, termynal's own defaults apply.
 
 ### Termynal Output Mode
 
@@ -208,7 +211,14 @@ plugins:
       termynal_width: 80
       termynal_scheme: xterm
       termynal_dark_bg: true
+      termynal_buttons: macos
+      termynal_prompt: "$"
+      # termynal_type_delay / termynal_line_delay / termynal_start_delay (ms)
+      # may also be set; unset, termynal's own animation defaults apply.
 ```
+
+Every block-level option above has a global `termynal_`-prefixed equivalent
+(e.g. `:buttons:` ↔ `termynal_buttons`); the block-level value wins.
 
 or per block:
 
