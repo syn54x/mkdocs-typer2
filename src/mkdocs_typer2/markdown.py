@@ -15,15 +15,29 @@ from .pretty import (
 
 class TyperExtension(markdown.Extension):
     def __init__(
-        self, *args, pretty: bool | None = None, engine: str = "legacy", **kwargs
+        self,
+        *args,
+        pretty: bool | None = None,
+        engine: str = "legacy",
+        termynal: bool = False,
+        width: int = 80,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
+        self.termynal = termynal
+        self.width = width
 
     def extendMarkdown(self, md: markdown.Markdown) -> None:
         md.parser.blockprocessors.register(
-            TyperProcessor(md.parser, pretty=self.pretty, engine=self.engine),
+            TyperProcessor(
+                md.parser,
+                pretty=self.pretty,
+                engine=self.engine,
+                termynal=self.termynal,
+                width=self.width,
+            ),
             "typer",
             175,
         )
@@ -31,11 +45,19 @@ class TyperExtension(markdown.Extension):
 
 class TyperProcessor(BlockProcessor):
     def __init__(
-        self, *args, pretty: bool | None = None, engine: str = "legacy", **kwargs
+        self,
+        *args,
+        pretty: bool | None = None,
+        engine: str = "legacy",
+        termynal: bool = False,
+        width: int = 80,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.pretty = pretty
         self.engine = engine
+        self.termynal = termynal
+        self.width = width
 
     def test(self, parent, block):
         return block.strip().startswith(":::") and "mkdocs-typer2" in block
@@ -53,6 +75,32 @@ class TyperProcessor(BlockProcessor):
 
         module = module_match.group(1)
         name = name_match.group(1) if name_match else ""
+
+        termynal_match = re.search(r":termynal:\s*(\S+)", block)
+        width_match = re.search(r":width:\s*(\S+)", block)
+        use_termynal = self.termynal
+        if termynal_match:
+            value = termynal_match.group(1).lower()
+            if value in ["true", "1", "yes"]:
+                use_termynal = True
+            elif value in ["false", "0", "no"]:
+                use_termynal = False
+        width = self.width
+        if width_match:
+            try:
+                width = int(width_match.group(1))
+            except ValueError:
+                pass
+
+        if use_termynal:
+            from .termynal_render import render_termynal_html
+
+            html = render_termynal_html(module, name, width=width)
+            placeholder = self.parser.md.htmlStash.store(html)
+            div = etree.SubElement(parent, "div")
+            div.set("class", "termynal-typer-docs")
+            div.text = placeholder
+            return True
 
         # Determine if pretty formatting should be used
         # Block-level setting overrides global setting if present

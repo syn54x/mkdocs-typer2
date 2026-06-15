@@ -14,6 +14,14 @@ class MkdocsTyper(BasePlugin):
             "engine",
             config_options.Type(str, default="legacy"),
         ),
+        (
+            "termynal",
+            config_options.Type(bool, default=False),
+        ),
+        (
+            "width",
+            config_options.Type(int, default=80),
+        ),
     )
 
     def on_config(self, config, **kwargs) -> dict:
@@ -21,6 +29,8 @@ class MkdocsTyper(BasePlugin):
             makeExtension(
                 pretty=self.config.get("pretty", False),
                 engine=self.config.get("engine", "legacy"),
+                termynal=self.config.get("termynal", False),
+                width=self.config.get("width", 80),
             )
         )
         return config

@@ -13,6 +13,9 @@ dependencies = [
 [project.optional-dependencies]
 mkdocs = ["mkdocs>=1.6.1,<2"]
 zensical = ["zensical>=0.0.30,<1"]
+# Required only for the :termynal: output mode. ansi2html converts the captured
+# --help ANSI to HTML; termynal provides the page CSS/JS (<1 guards its markup).
+termynal = ["ansi2html>=1.8", "termynal>=0.12,<1"]
 
 [project.scripts]
 "mkdocs-typer2" = "mkdocs_typer2.cli.cli:app"
@@ -39,6 +42,9 @@ dev = [
     "markdown-it-py>=3.0.0",
     "pydantic>=2.9.2",
     "zensical>=0.0.30,<1",
+    # so the termynal-mode tests run in CI
+    "ansi2html>=1.8",
+    "termynal>=0.12,<1",
 ]
 
 [tool.pytest.ini_options]

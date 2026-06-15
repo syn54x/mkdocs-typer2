@@ -29,6 +29,7 @@ I created this plugin because the original plugin was no longer working for me, 
 - Easy to configure and use
 - `pretty` feature for formatting arguments & options as tables
 - `engine` option to select legacy markdown parsing or native Click walking
+- `termynal` output mode that renders `--help` as an animated, colored terminal
 - Global plugin configuration or per-documentation block configuration
 
 ## How It Works
@@ -178,6 +179,53 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:name:` - The name of the CLI. If left blank, your CLI will simply be named `CLI` in your documentation.
 - `:pretty:` - Set to `true` to enable pretty formatting for this specific documentation block, overriding the global setting.
 - `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
+- `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. The root command is rendered first, followed by one block per direct subcommand. Overrides the global `termynal` setting.
+- `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
+
+### Termynal Output Mode
+
+Termynal mode introspects the Typer/Click app in-process and emits a faithful,
+colored terminal of what `<cmd> --help` prints. Typer apps (which render help
+through rich) come out colored; plain Click apps render their monochrome help.
+Nothing is executed as a subprocess.
+
+How it works: the app module is imported and each command's `--help` is rendered
+in-process (forcing rich's terminal output so color is preserved). Hidden
+commands are skipped, matching what `--help` itself shows. The ANSI output is
+converted to inline HTML with [`ansi2html`](https://github.com/pycontribs/ansi2html)
+and wrapped in termynal's `data-ty` markup, which `termynal.js` animates. The
+fork does not import termynal's Python renderer — it emits the markup directly,
+and `tests/test_termynal_contract.py` guards that markup against drift.
+
+Enable it globally via the MkDocs plugin:
+
+```yaml
+plugins:
+  - mkdocs-typer2:
+      termynal: true
+      width: 80
+```
+
+or per block:
+
+```markdown
+::: mkdocs-typer2
+    :module: my_module.cli
+    :name: mycli
+    :termynal: true
+    :width: 100
+```
+
+**Requirements / caveats:**
+
+- Termynal mode needs the optional `termynal` extra:
+  `pip install "mkdocs-typer2[termynal]"`. Using `:termynal:` without it raises a
+  clear install hint. ANSI-to-HTML conversion is done with `ansi2html`; the rest
+  of mkdocs-typer2 has no termynal dependency.
+- The rendered blocks rely on termynal's CSS/JS being present on the page. Enable
+  the [`termynal` MkDocs plugin](https://github.com/termynal/termynal.py) (or
+  otherwise include `termynal.css` / `termynal.js`), or the blocks will not
+  animate or be styled.
 
 ## Advanced Usage
 
