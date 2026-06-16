@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-16
+
 ### Added
 
 - `termynal` output mode: render a CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables, enabled per block (`:termynal: true`) or globally (`termynal: true`). The app is introspected in-process (no subprocess) and its colored `--help` is converted to termynal markup; by default only the root command is rendered. Requires the optional `[termynal]` extra (`pip install "mkdocs-typer2[termynal]"`); using the mode without it raises a clear install hint ([#35](https://github.com/syn54x/mkdocs-typer2/pull/35)).
