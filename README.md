@@ -29,6 +29,7 @@ I created this plugin because the original plugin was no longer working for me, 
 - Easy to configure and use
 - `pretty` feature for formatting arguments & options as tables
 - `engine` option to select legacy markdown parsing or native Click walking
+- `termynal` output mode that renders `--help` as an animated, colored terminal
 - Global plugin configuration or per-documentation block configuration
 
 ## How It Works
@@ -157,6 +158,33 @@ engine = "native"
 
 If you share one project between MkDocs and Zensical, keep `mkdocs-typer2` out of `plugins` for the Zensical-focused config (or use separate config files) so the Markdown extension is not applied twice.
 
+#### Termynal assets under Zensical
+
+The `:termynal:` output mode only emits termynal's `data-termynal` markup; the CSS/JS that styles and animates it is shipped separately. Under MkDocs the `termynal` plugin injects them, but **Zensical does not run that plugin**, so the blocks render as unstyled text unless you add the assets yourself.
+
+The simplest way is to point `extra_css` / `extra_javascript` at termynal's assets on a CDN. Pin the version to the `termynal` you installed (`pip show termynal`) so the assets match the markup this extension emits:
+
+**`mkdocs.yml`:**
+
+```yaml
+extra_css:
+  - https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.css
+extra_javascript:
+  - https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.js
+```
+
+**`zensical.toml`:**
+
+```toml
+[project]
+extra_css = ["https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.css"]
+extra_javascript = ["https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.js"]
+```
+
+To self-host instead, copy `termynal.css` / `termynal.js` from the installed `termynal` package's `assets/` directory into your docs tree and reference them by relative path.
+
+Do **not** inline the CSS/JS into page content (Zensical folds raw `<style>` text into the page title/heading). Use `extra_css` / `extra_javascript` so the assets load in the page head/footer as intended.
+
 ## Usage
 
 ### Basic Usage
@@ -178,6 +206,93 @@ In your Markdown files, use the `::: mkdocs-typer2` directive to generate docume
 - `:name:` - The name of the CLI. If left blank, your CLI will simply be named `CLI` in your documentation.
 - `:pretty:` - Set to `true` to enable pretty formatting for this specific documentation block, overriding the global setting.
 - `:engine:` - `legacy` parses Typer markdown (deprecated). `native` walks Click and renders lists or tables based on `pretty`.
+- `:termynal:` - Set to `true` to render the CLI's `--help` as an animated, colored [termynal](https://github.com/termynal/termynal.py) terminal instead of Markdown tables. By default only the root command's `--help` is rendered (see `:subcommands:` to include nested commands). Overrides the global `termynal` setting.
+- `:command:` - Render a specific subcommand instead of the root. A space-separated path selects nested commands (e.g. `:command: export` renders `<cli> export --help`; `:command: subapp sub-command` goes one level deeper). `:subcommands:` recursion then applies relative to the selected command. Block-level only.
+- `:subcommands:` - Recursion depth for termynal output. `0` (default) renders only the selected command's `--help`; `1` adds a block per direct subcommand, `2` adds their subcommands, and so on; `-1` renders every level. Hidden commands are skipped at every level.
+- `:width:` - Terminal width (in columns) used when capturing `--help` for termynal output. Defaults to `80`.
+- `:scheme:` - Color palette for termynal output. One of `ansi2html`, `dracula`, `mint-terminal`, `osx`, `osx-basic`, `osx-solid-colors`, `solarized`, `xterm`. Invalid values fall back to `xterm` (the default).
+- `:dark_bg:` - Set to `false` to use the scheme's light-background variant. Defaults to `true`.
+- `:buttons:` - Window chrome style for termynal output. One of `macos` (default) or `windows`. Invalid values fall back to `macos`.
+- `:prompt:` - Prompt symbol shown before the `--help` command. Defaults to `$`.
+- `:type_delay:` / `:line_delay:` / `:start_delay:` - Termynal animation timings in milliseconds (per character, per line, before start). Left unset, termynal's own defaults apply.
+
+### Termynal Output Mode
+
+Termynal mode introspects the Typer/Click app in-process and emits a faithful,
+colored terminal of what `<cmd> --help` prints. Typer apps (which render help
+through rich) come out colored; plain Click apps render their monochrome help.
+Nothing is executed as a subprocess. By default only the root command is shown;
+set `:subcommands:` (or `termynal_subcommands`) to a depth to stack its
+subcommands' `--help` below it (`-1` for the full tree).
+
+How it works: the app module is imported and each command's `--help` is rendered
+in-process (forcing rich's terminal output so color is preserved). Hidden
+commands are skipped, matching what `--help` itself shows. The ANSI output is
+converted to inline HTML with [`ansi2html`](https://github.com/pycontribs/ansi2html)
+and wrapped in termynal's `data-ty` markup, which `termynal.js` animates. It does
+not import termynal's Python renderer — it emits the markup directly, and
+`tests/test_termynal_contract.py` guards that markup against drift.
+
+Enable it globally via the MkDocs plugin:
+
+```yaml
+plugins:
+  - mkdocs-typer2:
+      termynal: true
+      termynal_subcommands: 0
+      termynal_width: 80
+      termynal_scheme: xterm
+      termynal_dark_bg: true
+      termynal_buttons: macos
+      termynal_prompt: "$"
+      # termynal_type_delay / termynal_line_delay / termynal_start_delay (ms)
+      # may also be set; unset, termynal's own animation defaults apply.
+```
+
+Every block-level option above has a global `termynal_`-prefixed equivalent
+(e.g. `:buttons:` ↔ `termynal_buttons`); the block-level value wins. The
+`:command:` selector is block-level only.
+
+or per block:
+
+```markdown
+::: mkdocs-typer2
+    :module: my_module.cli
+    :name: mycli
+    :termynal: true
+    :width: 100
+```
+
+To document one subcommand per block — with your own headings and prose around
+each — select it with `:command:`:
+
+```markdown
+## Export
+
+::: mkdocs-typer2
+    :module: my_module.cli
+    :name: mycli
+    :termynal: true
+    :command: export
+```
+
+**Requirements / caveats:**
+
+- Termynal mode needs the optional `termynal` extra:
+  `pip install "mkdocs-typer2[termynal]"`. Using `:termynal:` without it raises a
+  clear install hint. ANSI-to-HTML conversion is done with `ansi2html`; the rest
+  of mkdocs-typer2 has no termynal dependency.
+- The rendered blocks rely on termynal's CSS/JS being present on the page, and
+  how you provide it differs by builder:
+  - **MkDocs:** enable the
+    [`termynal` MkDocs plugin](https://github.com/termynal/termynal.py)
+    (`plugins: [termynal]`); it injects `termynal.css` / `termynal.js`
+    automatically.
+  - **Zensical:** the termynal plugin does not run, so add the assets yourself
+    via `extra_css` / `extra_javascript` — see
+    [Termynal assets under Zensical](#termynal-assets-under-zensical).
+
+  Without the CSS/JS the blocks render as unstyled text.
 
 ## Advanced Usage
 
