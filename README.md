@@ -158,6 +158,33 @@ engine = "native"
 
 If you share one project between MkDocs and Zensical, keep `mkdocs-typer2` out of `plugins` for the Zensical-focused config (or use separate config files) so the Markdown extension is not applied twice.
 
+#### Termynal assets under Zensical
+
+The `:termynal:` output mode only emits termynal's `data-termynal` markup; the CSS/JS that styles and animates it is shipped separately. Under MkDocs the `termynal` plugin injects them, but **Zensical does not run that plugin**, so the blocks render as unstyled text unless you add the assets yourself.
+
+The simplest way is to point `extra_css` / `extra_javascript` at termynal's assets on a CDN. Pin the version to the `termynal` you installed (`pip show termynal`) so the assets match the markup this extension emits:
+
+**`mkdocs.yml`:**
+
+```yaml
+extra_css:
+  - https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.css
+extra_javascript:
+  - https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.js
+```
+
+**`zensical.toml`:**
+
+```toml
+[project]
+extra_css = ["https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.css"]
+extra_javascript = ["https://cdn.jsdelivr.net/gh/termynal/termynal.py@0.14.0/termynal/assets/termynal.js"]
+```
+
+To self-host instead, copy `termynal.css` / `termynal.js` from the installed `termynal` package's `assets/` directory into your docs tree and reference them by relative path.
+
+Do **not** inline the CSS/JS into page content (Zensical folds raw `<style>` text into the page title/heading). Use `extra_css` / `extra_javascript` so the assets load in the page head/footer as intended.
+
 ## Usage
 
 ### Basic Usage
@@ -255,10 +282,17 @@ each — select it with `:command:`:
   `pip install "mkdocs-typer2[termynal]"`. Using `:termynal:` without it raises a
   clear install hint. ANSI-to-HTML conversion is done with `ansi2html`; the rest
   of mkdocs-typer2 has no termynal dependency.
-- The rendered blocks rely on termynal's CSS/JS being present on the page. Enable
-  the [`termynal` MkDocs plugin](https://github.com/termynal/termynal.py) (or
-  otherwise include `termynal.css` / `termynal.js`), or the blocks will not
-  animate or be styled.
+- The rendered blocks rely on termynal's CSS/JS being present on the page, and
+  how you provide it differs by builder:
+  - **MkDocs:** enable the
+    [`termynal` MkDocs plugin](https://github.com/termynal/termynal.py)
+    (`plugins: [termynal]`); it injects `termynal.css` / `termynal.js`
+    automatically.
+  - **Zensical:** the termynal plugin does not run, so add the assets yourself
+    via `extra_css` / `extra_javascript` — see
+    [Termynal assets under Zensical](#termynal-assets-under-zensical).
+
+  Without the CSS/JS the blocks render as unstyled text.
 
 ## Advanced Usage
 

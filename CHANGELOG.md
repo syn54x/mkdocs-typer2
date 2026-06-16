@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Termynal `:command:` directive option: render a specific subcommand's `--help` instead of the root, selected by a space-separated path (e.g. `:command: subapp sub-command`); `:subcommands:` recursion applies relative to it. Block-level only.
 - Termynal options, each available per block (`:option:`) and globally (`termynal_`-prefixed, e.g. `termynal_width`): `subcommands` (recursion depth: `0` root only, `N` levels, `-1` full tree), `width`, `scheme`, `dark_bg`, `buttons` (`macos`/`windows`), `prompt`, and `type_delay`/`line_delay`/`start_delay` animation timings. Invalid `scheme`/`buttons` values fall back to their defaults.
 - `CLI (Termynal)` documentation page demonstrating the new mode.
+- Documentation for serving termynal blocks under Zensical: register `termynal.css` / `termynal.js` via `extra_css` / `extra_javascript` (CDN one-liner or self-hosted), since Zensical does not run the `termynal` MkDocs plugin.
 
 ## [0.3.1] - 2026-05-27
 
