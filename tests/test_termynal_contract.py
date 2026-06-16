@@ -7,8 +7,26 @@ import pytest
 from mkdocs_typer2.termynal_render import (
     BUTTONS,
     TIMING_ATTRS,
+    TYPER_RICH_CONSOLE_HOOK,
     _termynal_block_html,
 )
+
+
+def test_typer_rich_console_hook_present() -> None:
+    """``_colored_help`` swaps typer's private rich-console factory to capture
+    colored ``--help`` (typer exposes no public hook for this). If typer renames
+    or removes it, color silently degrades to monochrome — fail loudly here so
+    the drift is caught in CI rather than shipped. Needs only typer, so it runs
+    even without the optional termynal extra installed.
+    """
+    import typer.rich_utils as ru
+
+    assert callable(getattr(ru, TYPER_RICH_CONSOLE_HOOK, None)), (
+        f"typer.rich_utils.{TYPER_RICH_CONSOLE_HOOK} is gone — the termynal "
+        "color-capture contract drifted. Update TYPER_RICH_CONSOLE_HOOK and "
+        "_colored_help in termynal_render.py to typer's new console factory."
+    )
+
 
 pytest.importorskip("termynal.markdown")
 

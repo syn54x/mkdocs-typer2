@@ -4,6 +4,7 @@ See the "Termynal Output Mode" section of the README for how this works and the
 coupling to termynal's markup contract.
 """
 
+import contextlib
 import io
 from dataclasses import dataclass, replace
 from typing import Dict, List, Literal, Optional, Tuple, get_args
@@ -146,33 +147,62 @@ def _termynal_block_html(
     )
 
 
-def _colored_help(command: click.core.Command, info_name: str, width: int = 80) -> str:
-    """Return the command's ``--help`` text, colored when the app uses rich."""
-    formatter = None
-    buf = io.StringIO()
+#: Name of the private typer factory we swap to capture colored ``--help``.
+#: Typer exposes no public injection point (see ``_colored_help``), so this is
+#: guarded by ``test_typer_rich_console_hook_present`` in the contract tests.
+TYPER_RICH_CONSOLE_HOOK = "_get_rich_console"
 
+
+def _colored_help(command: click.core.Command, info_name: str, width: int = 80) -> str:
+    """Return the command's ``--help`` text, colored when the app uses rich.
+
+    Typer has no public API to render colored ``--help`` to a string: its
+    ``rich_format_help()`` hardcodes ``console = _get_rich_console()`` with no
+    console/file parameter to inject (``CliRunner`` drops rich color, and the
+    env-var knobs are import-time + process-global). So we swap that private
+    factory for a buffer-backed ``Console``.
+
+    If that private hook ever disappears (a future typer rename), we degrade
+    safely: ``format_help`` runs with stdout redirected into the same buffer, so
+    its output is captured monochrome instead of leaking to the console or
+    crashing the build. ``test_typer_rich_console_hook_present`` fails loudly in
+    CI when the hook is gone, and the colored-render test catches the silent
+    drop to monochrome.
+    """
     import typer.rich_utils as ru
     from rich.console import Console
 
-    original = ru._get_rich_console
-    ru._get_rich_console = lambda stderr=False: Console(  # noqa: ARG005
-        force_terminal=True,
-        color_system="standard",
-        width=width,
-        file=buf,
-        highlight=False,
-    )
-    try:
-        ctx = click.Context(command, info_name=info_name)
-        formatter = ctx.make_formatter()
-        command.format_help(ctx, formatter)
-    finally:
-        ru._get_rich_console = original
+    buf = io.StringIO()
+    ctx = click.Context(command, info_name=info_name)
+    formatter = ctx.make_formatter()
+
+    original = getattr(ru, TYPER_RICH_CONSOLE_HOOK, None)
+    if original is not None:
+        setattr(
+            ru,
+            TYPER_RICH_CONSOLE_HOOK,
+            lambda stderr=False: Console(  # noqa: ARG005
+                force_terminal=True,
+                color_system="standard",
+                width=width,
+                file=buf,
+                highlight=False,
+            ),
+        )
+        try:
+            command.format_help(ctx, formatter)
+        finally:
+            setattr(ru, TYPER_RICH_CONSOLE_HOOK, original)
+    else:
+        # Hook gone: render without it, but redirect stdout so any rich output
+        # that bypasses our buffer is captured (monochrome) rather than leaked.
+        with contextlib.redirect_stdout(buf):
+            command.format_help(ctx, formatter)
 
     rich_text = buf.getvalue()
     if rich_text.strip():
         return rich_text
-    return formatter.getvalue() if formatter is not None else ""
+    return formatter.getvalue()
 
 
 def _one_block(

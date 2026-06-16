@@ -192,6 +192,41 @@ def test_render_termynal_html_plain_click_monochrome(monkeypatch):
     assert 'style="color:' not in html
 
 
+def test_missing_rich_console_hook_renders_without_crash_or_leak(monkeypatch, capsys):
+    """The safe-fallback branch: when typer's private console hook is absent,
+    rendering must still emit a block via plain ``format_help`` without crashing
+    or leaking help to stdout.
+
+    A real typer *rename* also rewrites typer's own ``rich_format_help`` to the
+    new name, so it can't be simulated by deleting the symbol (that just breaks
+    typer internally). A plain Click command never touches the hook, so it
+    exercises the ``else`` branch deterministically: it goes through the
+    stdout-redirected path and falls back to the Click formatter.
+    """
+    import typer.rich_utils as ru
+
+    from mkdocs_typer2.termynal_render import TYPER_RICH_CONSOLE_HOOK
+
+    monkeypatch.delattr(ru, TYPER_RICH_CONSOLE_HOOK, raising=False)
+
+    module = types.ModuleType("_plain_click_fallback_app")
+
+    @click.command()
+    def cli():
+        """A plain click command."""
+
+    module.cli = cli
+    monkeypatch.setitem(sys.modules, "_plain_click_fallback_app", module)
+
+    html = render_termynal_html("_plain_click_fallback_app", "cli")
+
+    # Still a real block, monochrome, and nothing leaked to the console.
+    assert "data-termynal" in html
+    assert "cli --help" in html
+    assert 'style="color:' not in html
+    assert capsys.readouterr().out == ""
+
+
 def test_scheme_changes_colors():
     from mkdocs_typer2.termynal_render import _ansi_to_html
 
