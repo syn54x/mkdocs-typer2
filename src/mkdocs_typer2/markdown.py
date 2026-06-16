@@ -126,7 +126,9 @@ class TyperProcessor(BlockProcessor):
             scheme=_directive_value(block, "scheme") or base.scheme,
             dark_bg=_as_bool(_directive_value(block, "dark_bg"), base.dark_bg),
             buttons=_directive_value(block, "buttons") or base.buttons,
-            prompt=_directive_value(block, "prompt") or base.prompt,
+            # Capture the rest of the line so a multi-word prompt (e.g. ``my $``)
+            # is kept whole rather than truncated at the first token.
+            prompt=_directive_line(block, "prompt") or base.prompt,
             type_delay=_as_int(_directive_value(block, "type_delay"), base.type_delay),
             line_delay=_as_int(_directive_value(block, "line_delay"), base.line_delay),
             start_delay=_as_int(

@@ -287,6 +287,21 @@ def test_prompt_option_changes_prompt_attribute():
     assert 'data-ty-prompt="$"' not in html
 
 
+def test_multi_word_prompt_threads_through_directive():
+    directive = (
+        "::: mkdocs-typer2\n"
+        "    :module: mkdocs_typer2.cli.cli\n"
+        "    :name: mkdocs-typer2\n"
+        "    :termynal: true\n"
+        "    :prompt: my prompt\n"
+    )
+    html = markdown.markdown(
+        directive, extensions=["tables", TyperExtension(engine="native")]
+    )
+    # The whole prompt is kept, not truncated at the first token.
+    assert 'data-ty-prompt="my prompt"' in html
+
+
 def test_timing_attributes_emitted_only_when_set():
     default = render_termynal_html(
         "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions()
