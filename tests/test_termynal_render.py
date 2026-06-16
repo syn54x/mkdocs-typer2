@@ -154,9 +154,7 @@ def test_subcommands_recursion_reaches_sub_subcommands(monkeypatch):
 
 def test_command_unknown_path_raises():
     with pytest.raises(ValueError, match="no subcommand"):
-        render_termynal_html(
-            "mkdocs_typer2.cli.cli", "mkdocs-typer2", command="nope"
-        )
+        render_termynal_html("mkdocs_typer2.cli.cli", "mkdocs-typer2", command="nope")
 
 
 def test_command_threads_through_directive():
