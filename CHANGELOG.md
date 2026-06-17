@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Termynal mode now keeps its colors when `NO_COLOR` is set in the build environment (e.g. ReadTheDocs). The capture `Console` passes `no_color=False`, so the help is no longer silently rendered monochrome — the output is a build artifact converted to HTML, not interactive terminal output ([#38](https://github.com/syn54x/mkdocs-typer2/issues/38)).
+
 ## [0.4.0] - 2026-06-16
 
 ### Added

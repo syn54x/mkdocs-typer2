@@ -36,6 +36,19 @@ def test_render_termynal_html_typer_colored_and_balanced():
     assert html.count("<span") == html.count("</span>")
 
 
+def test_render_termynal_html_keeps_color_when_no_color_set(monkeypatch):
+    # NO_COLOR in the build env (e.g. ReadTheDocs) must not strip color from the
+    # captured help: it is a build artifact converted to HTML, not interactive
+    # terminal output. rich's no_color defaults to ("NO_COLOR" in os.environ).
+    monkeypatch.setenv("NO_COLOR", "1")
+
+    html = render_termynal_html(
+        "mkdocs_typer2.cli.cli", "mkdocs-typer2", TermynalOptions(subcommands=1)
+    )
+
+    assert 'style="color:' in html
+
+
 def test_render_termynal_html_root_only_by_default():
     html = render_termynal_html("mkdocs_typer2.cli.cli", "mkdocs-typer2")
 
