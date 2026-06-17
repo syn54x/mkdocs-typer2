@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 75 180 50">
+  <!-- Main text with brackets -->
+  <text x="70" y="115" font-family="monospace" font-size="45" fill="#00ff95">
+    {<tspan>s</tspan><tspan fill="#54c7fc">54</tspan><tspan>x</tspan>}
+  </text>
+</svg>
