@@ -160,7 +160,10 @@ def _colored_help(command: click.core.Command, info_name: str, width: int = 80) 
     ``rich_format_help()`` hardcodes ``console = _get_rich_console()`` with no
     console/file parameter to inject (``CliRunner`` drops rich color, and the
     env-var knobs are import-time + process-global). So we swap that private
-    factory for a buffer-backed ``Console``.
+    factory for a buffer-backed ``Console``. That console sets
+    ``no_color=False`` so the captured help keeps its color even when
+    ``NO_COLOR`` is set in the environment (e.g. ReadTheDocs): this is a build
+    artifact converted to HTML, not interactive terminal output.
 
     If that private hook ever disappears (a future typer rename), we degrade
     safely: ``format_help`` runs with stdout redirected into the same buffer, so
@@ -184,6 +187,7 @@ def _colored_help(command: click.core.Command, info_name: str, width: int = 80) 
             lambda stderr=False: Console(  # noqa: ARG005
                 force_terminal=True,
                 color_system="standard",
+                no_color=False,
                 width=width,
                 file=buf,
                 highlight=False,
