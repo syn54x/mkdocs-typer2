@@ -1,5 +1,6 @@
 import sys
 import types
+from enum import Enum
 
 import click
 import pytest
@@ -415,7 +416,8 @@ def test_build_tree_from_click_app():
     option_names = {opt.name for opt in export.options}
     assert "--detail [full|minimal]" in option_names
     assert "--format [json|yaml|markdown]" in option_names
-    assert "--retries INTEGER" in option_names
+    # Click renders INTEGER; Typer's own help formatting renders <int>
+    assert option_names & {"--retries INTEGER", "--retries <int>"}
     assert "--config PATH" in option_names
 
 
@@ -423,14 +425,14 @@ def test_build_tree_from_click_app_includes_choice_options():
     module = types.ModuleType("tests.choice_module")
     module.app = typer.Typer()
 
+    class Mode(str, Enum):
+        a = "a"
+        b = "b"
+        c = "c"
+
+    # Typer >= 0.29 removed click_type and the `.type` attribute on options
     @module.app.command()
-    def run(
-        mode: str = typer.Option(
-            "a",
-            click_type=click.Choice(["a", "b", "c"]),
-            help="Mode to use",
-        ),
-    ):
+    def run(mode: Mode = typer.Option(Mode.a, help="Mode to use")):
         pass
 
     sys.modules[module.__name__] = module
@@ -438,6 +440,7 @@ def test_build_tree_from_click_app_includes_choice_options():
         tree = build_tree_from_click_app(module.__name__, "app")
         mode_option = next(opt for opt in tree.options if opt.name.startswith("--mode"))
         assert mode_option.name == "--mode [a|b|c]"
+        assert mode_option.default == "a"
         markdown = tree_to_markdown(tree)
         assert "`--mode [a|b|c]`" in markdown
         list_markdown = tree_to_markdown_list(tree)

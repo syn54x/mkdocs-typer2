@@ -1,10 +1,14 @@
 from enum import Enum
 from typing import Annotated
 
-import click
 import typer
 
 from .sub_cli import app as sub_app
+
+
+class DetailLevel(str, Enum):
+    full = "full"
+    minimal = "minimal"
 
 
 class ExportFormat(str, Enum):
@@ -26,10 +30,8 @@ def docs(name: str = typer.Option(..., help="The name of the project")):
 
 @app.command()
 def export(
-    detail: str = typer.Option(
-        "full",
-        click_type=click.Choice(["full", "minimal"]),
-        help="Documentation detail level",
+    detail: DetailLevel = typer.Option(
+        DetailLevel.full, help="Documentation detail level"
     ),
     format: ExportFormat = typer.Option(ExportFormat.json, help="Export format"),
     retries: int = typer.Option(1, help="Number of export attempts"),
@@ -39,7 +41,7 @@ def export(
 ):
     """Export project documentation"""
     print(
-        f"Exporting as {format.value} ({detail}) "
+        f"Exporting as {format.value} ({detail.value}) "
         f"with {retries} retries from {config}"
     )
 

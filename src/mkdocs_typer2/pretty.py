@@ -1,5 +1,6 @@
 import importlib
 import re
+from enum import Enum
 from typing import List, Optional
 
 import click
@@ -80,15 +81,24 @@ def _format_usage(usage_text: str) -> Optional[str]:
     return first_line.strip()
 
 
-def _format_choice_metavar(option: click.Option) -> Optional[str]:
-    param_types = [option.type, getattr(option.type, "func", None)]
-    for param_type in param_types:
-        if param_type is None:
-            continue
+def _option_choices(option: click.Option) -> Optional[tuple]:
+    option_type = getattr(option, "type", None)
+    for param_type in (option_type, getattr(option_type, "func", None)):
         choices = getattr(param_type, "choices", None)
         if choices is not None:
-            return f"[{'|'.join(str(choice) for choice in choices)}]"
+            return tuple(choices)
+    # Typer >= 0.29 drops Click's `.type` and describes choices on `type_descriptor`
+    descriptor = getattr(option, "type_descriptor", None)
+    if getattr(descriptor, "is_choice", False) and descriptor.choices:
+        return tuple(descriptor.choices)
     return None
+
+
+def _format_choice_metavar(option: click.Option) -> Optional[str]:
+    choices = _option_choices(option)
+    if choices is None:
+        return None
+    return f"[{'|'.join(str(getattr(choice, 'value', choice)) for choice in choices)}]"
 
 
 def _format_option_name(option: click.Option, ctx: click.Context) -> str:
@@ -117,6 +127,8 @@ def _format_option_default(option: click.Option) -> Optional[str]:
         if option.default is False:
             return option.secondary_opts[0].lstrip("-")
         return option.opts[0].lstrip("-") if option.opts else None
+    if isinstance(option.default, Enum):
+        return str(option.default.value)
     return str(option.default)
 
 
@@ -182,7 +194,7 @@ def _build_tree_from_click_command(
                     description=(param.help or "").strip(),
                     required=param.required,
                     default=_format_option_default(param),
-                    type=str(param.type) if param.type else None,
+                    type=str(param.type) if getattr(param, "type", None) else None,
                 )
             )
 
